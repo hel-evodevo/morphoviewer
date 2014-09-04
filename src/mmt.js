@@ -536,7 +536,7 @@ var morphoviewer = ( function( module ) {
      * The input is the array of duplets of edge indices*/
     function deleteDuplicates( edges ) {
         for ( var i = edges.length - 2; i > -1; i-- ) {
-            for ( var j = i + 1; j < edges.length; j++ ) {
+            for ( var j = 0; j < i; j++ ) {
                 a = edges[i][0];
                 b = edges[i][1];
                 x = edges[j][0];
