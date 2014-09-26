@@ -102,6 +102,69 @@ var morphoviewer = ( function( module ) {
         return p;
     }
 
+    module.vertexArrayFromTOOTH = function( file, onload ) {
+        var loader = function( data ) {
+            var model = parseTOOTH( data );
+            if ( onload != undefined ) {
+                onload( model );
+            }
+        };
+
+        loadFile( file, loader );
+    };
+
+    /* Parses a buffer containing data from a .TOOTH file.
+     * Returns the vertices, their triangulation, vertex normals (unwrapped),
+     * the curvature and orientation (unwrapped). */
+    function parseTOOTH( buffer ) {
+        //the model
+        var m = {
+            vertices: { v: [], i: [] },
+            normals: [],
+            curvature: [],
+            orientation: []
+        };
+
+        var offset = 0.0;
+        var chars = new Uint8Array( buffer );
+
+        while ( offset < chars.length ) {
+            var line = readLine( chars, offset );
+            offset += line.length + 1;
+            //line = line.replace(/ +(?= )/g,'');
+            //line = line.replace(/(^\s+|\s+$)/g, '');
+
+            var tokens = line.split(" ");
+
+            if ( tokens[0] == "vertex" ) {
+                m.vertices.v.push([
+                    parseFloat( tokens[1] ),
+                    parseFloat( tokens[2] ),
+                    parseFloat( tokens[3] )
+                ]);
+            } else if ( tokens[0] == "normal" ) {
+                m.normals.push( tokens[1] );
+                m.normals.push( tokens[2] );
+                m.normals.push( tokens[3] );
+            } else if ( tokens[0] == "triangle" ) {
+                m.vertices.i.push([
+                    parseInt( tokens[1] ) - 1,
+                    parseInt( tokens[2] ) - 1,
+                    parseInt( tokens[3] ) - 1
+                ]);
+            } else if ( tokens[0] == "curvature" ) {
+                m.curvature.push( tokens[1] );
+                m.curvature.push( tokens[1] );
+                m.curvature.push( tokens[1] );
+            } else if ( tokens[0] == "orientation" ) {
+                m.orientation.push( tokens[1] );
+                m.orientation.push( tokens[1] );
+                m.orientation.push( tokens[1] );
+            }
+        }
+        return m;
+    }
+
     /*Parses a buffer containing data from a wavefront .OBJ file
      * Returns vertices, their triangulation, and vertex normals, if possible
      * This parser does not do anything with groups.*/

@@ -239,6 +239,18 @@ var morphoviewer = ( function( tools ) {
 
             tools.vertexArrayFromPointCloud( file, onload );
 
+        } else if ( type == "tooth" ) {
+            mesh = new tools.Mesh( gl );
+            var onload = function( model ) {
+                var verts = tools.unwrapArray( model.vertices.v, model.vertices.i );
+                mesh.meshFromArray( verts, model.normals, model.curvature, model.orientation );
+                module.viewIlluminated();
+                var aabb = tools.getAabb( model.vertices.v );
+                 camera.setBestPositionForModel( aabb );
+            };
+
+            tools.vertexArrayFromTOOTH( file, onload );
+
         } else {
             throw "morphoviewer.view: unrecognized 3d file type";
         }
