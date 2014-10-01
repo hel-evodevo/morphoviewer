@@ -159,6 +159,10 @@ var morphoviewer = ( function( tools ) {
         }
     }
 
+    function onMouseUp( event ) {
+        canvas.onmousemove = function( e ) {return false;};
+    }
+
     function onMouseMove( event ) {
         var x = event.pageX;
         var y = event.pageY;
