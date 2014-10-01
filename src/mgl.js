@@ -112,7 +112,7 @@ var morphoviewer = ( function( module ) {
                 gl.getProgramInfoLog( program ) );
         }
         return program;
-    };
+    }
 
     module.Program.prototype.programFromDOM = function( vertexId, fragmentId ) {
         //first, get the shader objects
@@ -148,7 +148,7 @@ var morphoviewer = ( function( module ) {
             return true;
         }
         return false;
-    }
+    };
 
     /**
      * Stops WebGL from using this program object by binding the current program slot to zero.
@@ -487,10 +487,6 @@ var morphoviewer = ( function( module ) {
         return a + t * ( b - a );
     }
 
-    function sign( num ) {
-        return num ? num<0?-1:1 :0
-    }
-
     /*Returns {mat3} rotation matrix corresponding to the rotation
      * theta about the axis u.*/
     //CONTRIBUTE THIS TO GLMATRIX!
@@ -552,12 +548,6 @@ var morphoviewer = ( function( module ) {
             mat3.fromMat4( mat3.create(), this.viewTransform )
         );
     };
-
-    module.Camera.prototype.reset = function() {
-        this.targetRadius = 10.0;
-        this.rotX = 0.0;
-        this.rotY = 0.0;
-    }
 
     /**
      * Sets the camera to a position where the target object is centered and in full view.
