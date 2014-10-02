@@ -242,7 +242,6 @@ var morphoviewer = ( function( tools ) {
         }  else if ( type == "morphobuffer" ) {
             mesh = new tools.Mesh( gl );
             var onload = function( model ) {
-                console.log("there are " + model.vertices.v.length + " vertices and " + model.vertices.i.length + " triangles." );
                 var verts = tools.unwrapArray( model.vertices.v, model.vertices.i );
                 mesh.meshFromArray( verts, model.normals, model.curvature, model.orientation );
                 module.viewIlluminated();
