@@ -10,6 +10,9 @@ different kinds of files, and controlling the type of shading, view, type of pro
 
 An example of moprhobrowser.js in use is [here](https://github.com/Nelarius/Nelarius.github.io/blob/master/index.html).
 
+##Camera controls
+The library provides the following camera controls for the WebGL canvas: mouse wheel to zoom in and out, left button down + mouse move to rotate the camera, right mouse button down + mouse move to pan the camera.
+
 ##Initialize a WebGL canvas
 Before this library's functions can be called, a WebGL canvas must be initialized. To do so, you can write `<canvas id="glcanvas" width="800" height="600"></canvas>` in your HTML document. Once a canvas exists, you call `morphoviewer.initialize( id )`, where `id` is the id of your canvas. By default, the canvas id `"glcanvas"` is searched for in the DOM.
 
@@ -42,6 +45,10 @@ hemispherical lighting, or color the surface according to its curvature or orien
 The illuminating hemisphere can be rotated by doing
 `morphoviewer.setLightPolarAngle( value )` where `value` is between 0 and PI, and
 `morphoviewer.setLightAzimuthalAngle( value )` where `value` is between 0 and 2*PI
+
+##Changing the camera angle
+The following code will rotate the camera to a predefined view: `morphoviewer.viewLeft()`, `morphoviewer.viewRight()`,
+`morphoviewer.viewTop()`, `morphoviewer.viewBottom()`, `morphoviewer.viewFront()`, `morphoviewer.viewBack()`.
 
 ##The morphobuffer file format
 The morphobuffer format is a binary file format which consists of a series of single byte identifiers, followed by 
