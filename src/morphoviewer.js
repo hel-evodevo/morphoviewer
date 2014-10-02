@@ -214,7 +214,7 @@ var morphoviewer = ( function( tools ) {
                 module.viewIlluminated();
                 var aabb = tools.getAabb( model.vertices.v );
                 camera.setBestPositionForModel( aabb );
-            }
+            };
 
             tools.vertexArrayFromOBJ( file, onload );
 
@@ -244,8 +244,8 @@ var morphoviewer = ( function( tools ) {
             var onload = function( model ) {
                 var verts = tools.unwrapArray( model.vertices.v, model.vertices.i );
                 mesh.meshFromArray( verts, model.normals, model.curvature, model.orientation );
-                module.viewIlluminated();
-                var aabb = tools.getAabb( module.vertices.v );
+                module.viewHemispherical();
+                var aabb = tools.getAabb( model.vertices.v );
                 camera.setBestPositionForModel( aabb );
             };
             tools.vertexArrayFromMorphobuffer( file, onload );
