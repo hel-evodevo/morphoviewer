@@ -1,5 +1,5 @@
 #Morphoviewer.js
-Render a 3d mesh in the browser and display various surface properties.
+####Render a 3d mesh in the browser and display its surface properties.
 
 Morphoviewer.js provides facilites for loading .OBJ files, csv point clouds and a certain type of binary file (a
 morphobuffer file) and rendering them using WebGL. In order to render a point cloud, the points need to be triangulated,
