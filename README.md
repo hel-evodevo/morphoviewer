@@ -8,9 +8,10 @@ which is something that morphoviewer.js does for you automatically, using a Dela
 Using morphoviewer.js is simple. The library specifies the morphoviewer namespace, which contains methods for viewing
 different kinds of files, and controlling the type of shading, view, type of projection, etc.
 
+An example of moprhobrowser.js in use is [here](https://github.com/Nelarius/Nelarius.github.io/blob/master/index.html).
 ##Loading a file
-To load a file, simply do `morphoviewer.viewData( <name>, <type>)`, where <name> is the name of the file to be displayed,
-and type is the type of the file. valid types are `"obj"` for displaying Wavefront .OBJ files, `"point cloud"` for
+To load a file, simply do `morphoviewer.viewData( name, type)`, where `name` is the name of the file to be displayed,
+and `type` is the type of the file. Valid types are `"obj"` for displaying Wavefront .OBJ files, `"point cloud"` for
 displaying text csv point clouds, and `"morphobuffer"` for displaying binary morphobuffer files (more on this file type
 later).
 
@@ -24,15 +25,35 @@ Morphoviewer.js can render the surface as a wireframe, or illuminate the surface
 hemispherical lighting, or color the surface according to its curvature or orientation.
 
 `morphoviewer.viewWireframe()` to view in wireframe.
+
 `morphoviewer.viewSurfaceCurvature()` to color the surface accoring to the surface curvature for that polygon
+
 `morphoviewer.viewOrientation()` to color the surface according to the surface normal's XY orientation
+
 `morphoviewer.viewIlluminated()` renders the object using a directional light and phong shading
+
 `morphoviewer.viewHemispherical()` renders the object using a hemispherical light
 
 ###Changing the hemisphere orientation
 The illuminating hemisphere can be rotated by doing
-`morphoviewer.setLightPolarAngle( <value> )` where value is between 0 and PI, and
-`morphoviewer.setLightAzimuthalAngle( <value> )` where value is between 0 and 2*PI
+`morphoviewer.setLightPolarAngle( value )` where `value` is between 0 and PI, and
+`morphoviewer.setLightAzimuthalAngle( value )` where `value` is between 0 and 2*PI
 
+##The morphobuffer file format
+The morphobuffer format is a binary file format which consists of a series of single byte identifiers, followed by 
+bytes representing different values. The bytes are written as network-endian (big endian).
 
+The file contains the precalculated values for the vertices, triangles, normals, curvature and orientation for the
+mesh.
 
+Vertex: 1 byte char (`v`), followed by 3 * 8 bytes, where an 8 byte chunk is one floating point number.
+
+Normal: 1 byte char (`n`), followed by 3 * 8 bytes, where an 8 byte chunk is one floating point number.
+
+Triangle: 1 byte char (`t`), followed by 3 * 4 bytes, where each 4 byte chunk is one unsigned integer.
+
+Curvature: 1 byte char (`c`) followed by 8 bytes representing one floating point number.
+
+Orientation: 1 byte char (`o`) followed by 8 bytes representing one floating point number.
+
+TODO: write about the way morphoviewer.js interprets the vertices and normals.
