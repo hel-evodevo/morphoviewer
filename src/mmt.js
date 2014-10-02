@@ -101,9 +101,9 @@ var morphoviewer = ( function( module ) {
         return p;
     }
 
-    module.vertexArrayFromTOOTH = function( file, onload ) {
-        var loader = function( data ) {
-            var model = parseTOOTH( data );
+    module.vertexArrayFromMorphobuffer = function( file, onload ) {
+        var loader = function( buffer ) {
+            var model = parseMorphobuffer( buffer );
             if ( onload != undefined ) {
                 onload( model );
             }
@@ -112,51 +112,41 @@ var morphoviewer = ( function( module ) {
         loadFile( file, loader );
     };
 
-    /* Parses a buffer containing data from a .TOOTH file.
-     * Returns the vertices, their triangulation, vertex normals (unwrapped),
-     * the curvature and orientation (unwrapped). */
-    function parseTOOTH( buffer ) {
-        //the model
+    function parseMorphobuffer( buffer ) {
+        var bytes = new Uint8Array( buffer );
         var m = {
             vertices: { v: [], i: [] },
             normals: [],
             curvature: [],
             orientation: []
         };
-
-        var offset = 0.0;
-        var chars = new Uint8Array( buffer );
-
-        while ( offset < chars.length ) {
-            var line = readLine( chars, offset );
-            offset += line.length + 1;
-            //line = line.replace(/ +(?= )/g,'');
-            //line = line.replace(/(^\s+|\s+$)/g, '');
-
-            var tokens = line.split(" ");
-
-            if ( tokens[0] == "vertex" ) {
+        var view = jDataView( bytes );
+        while ( view.tell() < bytes.length ) {
+            //get the identifier of the following bytes
+            var c = view.getChar();
+            if ( c == "v" ) {
                 m.vertices.v.push([
-                    parseFloat( tokens[1] ),
-                    parseFloat( tokens[2] ),
-                    parseFloat( tokens[3] )
+                    view.getFloat64(),
+                    view.getFloat64(),
+                    view.getFloat64()
                 ]);
-            } else if ( tokens[0] == "normal" ) {
-                m.normals.push( tokens[1] );
-                m.normals.push( tokens[2] );
-                m.normals.push( tokens[3] );
-            } else if ( tokens[0] == "triangle" ) {
+            } else if ( c == 't' ) {
                 m.vertices.i.push([
-                    parseInt( tokens[1] ) - 1,
-                    parseInt( tokens[2] ) - 1,
-                    parseInt( tokens[3] ) - 1
+                    view.getUint32(),
+                    view.getUint32(),
+                    view.getUint32()
                 ]);
-            } else if ( tokens[0] == "curvature" ) {
-                m.curvature.push( tokens[1] );
-                m.curvature.push( tokens[1] );
-                m.curvature.push( tokens[1] );
-            } else if ( tokens[0] == "orientation" ) {
-                m.orientation.push( tokens[1] );
+            } else if ( c == 'n' ) {
+                m.normals.push( view.getFloat64() );
+                m.normals.push( view.getFloat64() );
+                m.normals.push( view.getFloat64() );
+            } else if ( c == 'c' ) {
+                var curves = view.getFloat64();
+                m.curvature.push( curves );
+                m.curvature.push( curves );
+                m.curvature.push( curves );
+            } else if ( c == 'o' ) {
+                m.orientation.push( view.getFloat64() );
             }
         }
         return m;
@@ -199,7 +189,7 @@ var morphoviewer = ( function( module ) {
                 var i1 = tokens[1].split("/");
 
                 if ( i1.length == 1 ) {
-                    var i1 = parseInt( i1 ) - 1;
+                    i1 = parseInt( i1 ) - 1;
                     if ( i1 < 0 ) i1 = vlen + i1 + 1;
                     for ( var j = 2; j < tokens.length - 1; j ++ ) {
                         var i2 = parseInt( tokens[j] ) - 1;
@@ -539,7 +529,7 @@ var morphoviewer = ( function( module ) {
         return scalars;
     };
 
-    /*A dirty hack: cometimes the curvature will be E+8 times larger than
+    /*A dirty hack: sometimes the curvature will be E+8 times larger than
      * the smallest value, meaning color variation are not visible. This clamps it so
      * that the range is more reasonable.*/
     function clampTrace( trace ) {
@@ -576,3 +566,5 @@ var morphoviewer = ( function( module ) {
 
     return module;
 }( morphoviewer || {} ) );
+
+

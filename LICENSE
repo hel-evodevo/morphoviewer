@@ -20,6 +20,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-This project depends on
+External libraries used by Morphoviewer.js
+---------------------------------------
 Delaunay.js, which is public domain
 gl-matrix is under the MIT license
+jDataView is under the Do What The Fuck You Want license

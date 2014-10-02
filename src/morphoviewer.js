@@ -239,17 +239,17 @@ var morphoviewer = ( function( tools ) {
 
             tools.vertexArrayFromPointCloud( file, onload );
 
-        } else if ( type == "tooth" ) {
+        }  else if ( type == "morphobuffer" ) {
             mesh = new tools.Mesh( gl );
             var onload = function( model ) {
+                console.log("there are " + model.vertices.v.length + " vertices and " + model.vertices.i.length + " triangles." );
                 var verts = tools.unwrapArray( model.vertices.v, model.vertices.i );
                 mesh.meshFromArray( verts, model.normals, model.curvature, model.orientation );
                 module.viewIlluminated();
-                var aabb = tools.getAabb( model.vertices.v );
-                 camera.setBestPositionForModel( aabb );
+                var aabb = tools.getAabb( module.vertices.v );
+                camera.setBestPositionForModel( aabb );
             };
-
-            tools.vertexArrayFromTOOTH( file, onload );
+            tools.vertexArrayFromMorphobuffer( file, onload );
 
         } else {
             throw "morphoviewer.view: unrecognized 3d file type";
