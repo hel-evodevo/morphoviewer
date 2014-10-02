@@ -9,6 +9,10 @@ Using morphoviewer.js is simple. The library specifies the morphoviewer namespac
 different kinds of files, and controlling the type of shading, view, type of projection, etc.
 
 An example of moprhobrowser.js in use is [here](https://github.com/Nelarius/Nelarius.github.io/blob/master/index.html).
+
+##Initialize a WebGL canvas
+Before this library's functions can be called, a WebGL canvas must be initialized. To do so, you can write `<canvas id="glcanvas" width="800" height="600"></canvas>` in your HTML document. Once a canvas exists, you call `morphoviewer.initialize( id )`, where `id` is the id of your canvas. By default, the canvas id `"glcanvas"` is searched for in the DOM.
+
 ##Loading a file
 To load a file, simply do `morphoviewer.viewData( name, type)`, where `name` is the name of the file to be displayed,
 and `type` is the type of the file. Valid types are `"obj"` for displaying Wavefront .OBJ files, `"point cloud"` for
