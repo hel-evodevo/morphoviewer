@@ -11,10 +11,15 @@ different kinds of files, and controlling the type of shading, view, type of pro
 An example of moprhobrowser.js in use is [here](https://github.com/Nelarius/Nelarius.github.io/blob/master/index.html).
 
 ##Camera controls
-The library provides the following camera controls for the WebGL canvas: mouse wheel to zoom in and out, left button down + mouse move to rotate the camera, right mouse button down + mouse move to pan the camera.
+The library provides automatic camera controls for the WebGL canvas; no code is required to activate them. The controls
+are: mouse wheel to zoom in and out, left button down + mouse move to rotate the camera, right mouse button down + 
+mouse move to pan the camera.
 
 ##Initialize a WebGL canvas
-Before this library's functions can be called, a WebGL canvas must be initialized. To do so, you can write `<canvas id="glcanvas" width="800" height="600"></canvas>` in your HTML document. Once a canvas exists, you call `morphoviewer.initialize( id )`, where `id` is the id of your canvas. By default, the canvas id `"glcanvas"` is searched for in the DOM.
+Before this library's functions can be called, a WebGL canvas must be initialized. To do so, you can write 
+`<canvas id="glcanvas" width="800" height="600"></canvas>` in your HTML document. Once a canvas exists, you 
+call `morphoviewer.initialize( id )`, where `id` is the id of your canvas. By default, the canvas id `"glcanvas"` 
+is searched for in the DOM.
 
 ##Loading a file
 To load a file, simply do `morphoviewer.viewData( name, type)`, where `name` is the name of the file to be displayed,
@@ -54,8 +59,18 @@ The following code will rotate the camera to a predefined view: `morphoviewer.vi
 The morphobuffer format is a binary file format which consists of a series of single byte identifiers, followed by 
 bytes representing different values. The bytes are written as network-endian (big endian).
 
-The file contains the precalculated values for the vertices, triangles, normals, curvature and orientation for the
-mesh.
+###How the data is packed in the morphobuffer format
+Each vertex is unique and must be listed as such in the file. In the mesh, however, neighboring triangles will share
+vertices. The triangle is defined as three indices into the vertex list.
+
+Per-vertex attributes (values unique to each vertex) are the vertex normals, and the orientation. These must be listed
+in the same order as the vertices are specified in.
+
+Per-face attributes are the surface curvature values. These must be listed in the same order as the triangles are
+specified in.
+
+###Byte fields in the morphobuffer format
+Each byte field starts with a one byte identifier and is followed by a variable number of bytes. The byte fields are
 
 Vertex: 1 byte char (`v`), followed by 3 * 8 bytes, where an 8 byte chunk is one floating point number.
 
@@ -66,5 +81,3 @@ Triangle: 1 byte char (`t`), followed by 3 * 4 bytes, where each 4 byte chunk is
 Curvature: 1 byte char (`c`) followed by 8 bytes representing one floating point number.
 
 Orientation: 1 byte char (`o`) followed by 8 bytes representing one floating point number.
-
-TODO: write about the way morphoviewer.js interprets the vertices and normals.
