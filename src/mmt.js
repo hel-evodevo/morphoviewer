@@ -137,9 +137,11 @@ var morphoviewer = ( function( module ) {
                     view.getUint32()
                 ]);
             } else if ( c == 'n' ) {
-                m.normals.push( view.getFloat64() );
-                m.normals.push( view.getFloat64() );
-                m.normals.push( view.getFloat64() );
+                m.normals.push([
+                    view.getFloat64(),
+                    view.getFloat64(),
+                    view.getFloat64()
+                ]);
             } else if ( c == 'c' ) {
                 var curves = view.getFloat64();
                 m.curvature.push( curves );
@@ -284,18 +286,30 @@ var morphoviewer = ( function( module ) {
      *
      * @returns {Array} the unwrapped array of vertex coordinates.
      */
-    module.unwrapArray = function( v, inds ) {
+    module.unwrapVectorArray = function( v, inds ) {
         var verts = [];
         for ( var i = 0; i < inds.length; i++ ) {
-            if ( inds[i][0] >= v.length || inds[i][1] >= v.length || inds[i][2] >= v.length ) {
+            /*if ( inds[i][0] >= v.length || inds[i][1] >= v.length || inds[i][2] >= v.length ) {
                 console.log( inds[i][0] + " " + inds[i][1] + " " + inds[i][2] + ", length: " + v.length );
                 throw "MESH FAILURE";
-            }
+            }*/
             verts.push( v[inds[i][0]][0], v[inds[i][0]][1], v[inds[i][0]][2] );	//first vertex
             verts.push( v[inds[i][1]][0], v[inds[i][1]][1], v[inds[i][1]][2] );	//second vertex
             verts.push( v[inds[i][2]][0], v[inds[i][2]][1], v[inds[i][2]][2] );	//third vertex
         }
         return verts;
+    };
+
+    module.unwrapArray = function( v, inds ) {
+        var values = [];
+        for ( var i = 0; i < inds.length; i++ ) {
+            values.push(
+                v[ inds[i][0] ],
+                v[ inds[i][1] ],
+                v[ inds[i][2] ]
+            );
+        }
+        return values;
     };
 
     /**

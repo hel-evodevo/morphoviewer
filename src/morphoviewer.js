@@ -198,13 +198,13 @@ var morphoviewer = ( function( tools ) {
 
             var onload = function( model ) {
                 tools.centerPointCloud( model.vertices.v );
-                var verts = tools.unwrapArray( model.vertices.v, model.vertices.i );
+                var verts = tools.unwrapVectorArray( model.vertices.v, model.vertices.i );
                 var norms;
                 if ( model.normals.v.length == 0 ) {
                     norms = tools.vertexNormals( model.vertices.v, model.vertices.i );
-                    norms = tools.unwrapArray( norms, model.vertices.i );
+                    norms = tools.unwrapVectorArray( norms, model.vertices.i );
                 } else {
-                    norms = tools.unwrapArray( model.normals.v, model.normals.i );
+                    norms = tools.unwrapVectorArray( model.normals.v, model.normals.i );
                 }
 
                 var curvature = tools.surfaceVariation( verts, norms );
@@ -224,9 +224,9 @@ var morphoviewer = ( function( tools ) {
                 tools.centerPointCloud( points );
                 var tris = tools.triangulate( points );
 
-                var verts = tools.unwrapArray( points, tris );
+                var verts = tools.unwrapVectorArray( points, tris );
                 var norms = tools.vertexNormals( points, tris );
-                norms = tools.unwrapArray( norms, tris );
+                norms = tools.unwrapVectorArray( norms, tris );
                 var curvature = tools.surfaceVariation( verts, norms );
                 var orientation = tools.surfaceOrientation( norms );
 
@@ -242,8 +242,14 @@ var morphoviewer = ( function( tools ) {
         }  else if ( type == "morphobuffer" ) {
             mesh = new tools.Mesh( gl );
             var onload = function( model ) {
-                var verts = tools.unwrapArray( model.vertices.v, model.vertices.i );
-                mesh.meshFromArray( verts, model.normals, model.curvature, model.orientation );
+                //vertices have to unwrapped
+                var verts = tools.unwrapVectorArray( model.vertices.v, model.vertices.i );
+                //normals are per-vertex and have to be unwrapped
+                var norms = tools.unwrapVectorArray( model.normals, model.vertices.i );
+                //orientation values are per-vertex and have to be unwrapped
+                var orientation = tools.unwrapArray( model.orientation, model.vertices.i );
+                //curvature is per-face and is already unwrapped by the parsing process
+                mesh.meshFromArray( verts, norms, model.curvature, orientation );
                 module.viewHemispherical();
                 var aabb = tools.getAabb( model.vertices.v );
                 camera.setBestPositionForModel( aabb );
@@ -251,7 +257,7 @@ var morphoviewer = ( function( tools ) {
             tools.vertexArrayFromMorphobuffer( file, onload );
 
         } else {
-            throw "morphoviewer.view: unrecognized 3d file type";
+            throw "morphoviewer.viewData: unrecognized 3d file type";
         }
     };
 
