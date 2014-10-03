@@ -22,13 +22,13 @@ call `morphoviewer.initialize( id )`, where `id` is the id of your canvas. By de
 is searched for in the DOM.
 
 ##Loading a file
-To load a file, simply do `morphoviewer.viewData( name, type)`, where `name` is the name of the file to be displayed,
+To load a file for viewing, simply do `morphoviewer.viewData( name, type)`, where `name` is the name of the file to be displayed,
 and `type` is the type of the file. Valid types are `"obj"` for displaying Wavefront .OBJ files, `"point cloud"` for
 displaying text csv point clouds, and `"morphobuffer"` for displaying binary morphobuffer files (more on this file type
 later).
 
 ##Changing projection
-Moprhoviewer.js renders using orthographics projection by default. To control the type of projection used, simply
+Moprhoviewer.js renders using orthographic projection by default. To control the type of projection used, simply
 do `morphoviewer.viewPerspective()` for rendering using perspective projection, or `morphoviewer.viewOrtho()` for
 rendering using orthographic projection.
 
