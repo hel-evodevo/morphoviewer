@@ -56,7 +56,10 @@ The following code will rotate the camera to a predefined view: `morphoviewer.vi
 `morphoviewer.viewTop()`, `morphoviewer.viewBottom()`, `morphoviewer.viewFront()`, `morphoviewer.viewBack()`.
 
 ##The morphobuffer file format
-The morphobuffer file format contains the vertex coordinates, the normals, the triangulation, the curvature, and the orientation values. Loading a morphobuffer file means that very little processing is done in the browser. The only processing done is unpacking the values from the file, which is far quicker than triangulating the point cloud in the browser.
+The morphobuffer file format contains the vertex coordinates, the normals, the triangulation, the curvature, and the 
+orientation values. Loading a morphobuffer file means that very little processing is done in the browser. The only 
+processing done is unpacking the values from the file, which is far quicker than triangulating the point cloud in 
+the browser.
 
 The morphobuffer format is a binary file format which consists of a series of single byte identifiers, followed by 
 bytes representing different values. The bytes are written as network-endian (big endian). 
