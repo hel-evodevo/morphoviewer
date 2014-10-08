@@ -66,13 +66,16 @@ var morphoviewer = ( function( tools ) {
         canvas.onmousedown = onMouseDown;
         canvas.onmouseup = onMouseUp;
         canvas.oncontextmenu = function( e ) { e.preventDefault(); };
-        //add mouse wheel listener to the page (not the canvas!)
-        //some compatibility cruft
-        var mousewheelEvent = (/FireFox/i.test(navigator.userAgent))?"DOMMouseScroll" : "mousewheel";
-        if ( document.attachEvent ) {	//if IE
-            document.attachEvent( "on"+mousewheelEvent, onMouseWheel );
-        } else if ( document.addEventListener ) {	//WC3 browsers
-            document.addEventListener( mousewheelEvent, onMouseWheel, false );
+
+        //add a mousewheel event listener to the canvas
+        if ( canvas.addEventListener ) {
+            //IE9, Chrome, Safari, Opera
+            canvas.addEventListener( "mousewheel", onMouseWheel, false );
+            //Firefox
+            canvas.addEventListener( "DOMMouseScroll", onMouseWheel );
+        } else {
+            //IE6/7/8
+            canvas.addEventListener( "onmousewheel", onMouseWheel );
         }
 
         gl = initWebGL( canvas );
@@ -125,6 +128,10 @@ var morphoviewer = ( function( tools ) {
 
     function onMouseWheel( e ) {
         var event = window.event || e;
+        //prevent from scrolling the document
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        //handle dolly zoom
         var delta = event.detail ? event.detail * (-120) : event.wheelDelta;
         camera.dolly( delta * -0.0025 );
     }

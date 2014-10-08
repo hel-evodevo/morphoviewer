@@ -1,14 +1,14 @@
 #Morphoviewer.js
 ####Render a 3d mesh in the browser and display its surface properties.
 
-Morphoviewer.js provides facilites for loading .OBJ files, csv point clouds and a certain type of binary file (a
+Morphoviewer.js provides facilities for loading .OBJ files, csv point clouds and a certain type of binary file (a
 morphobuffer file) and rendering them using WebGL. In order to render a point cloud, the points need to be triangulated,
 which is something that morphoviewer.js does for you automatically, using a Delaunay triangulation algorithm.
 
 Using morphoviewer.js is simple. The library specifies the morphoviewer namespace, which contains methods for viewing
 different kinds of files, and controlling the type of shading, view, type of projection, etc.
 
-An example of moprhobrowser.js in use is [here](https://github.com/Nelarius/Nelarius.github.io/blob/master/index.html).
+An example of morphoviewer.js in use is [here](https://github.com/Nelarius/Nelarius.github.io/blob/master/index.html).
 
 ##Camera controls
 The library provides automatic camera controls for the WebGL canvas; no code is required to activate them. The controls
