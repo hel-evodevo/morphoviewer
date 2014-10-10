@@ -824,24 +824,18 @@ var morphoviewer = ( function( module ) {
 
             "vec4 rainbowColor( float scalar ) {	//scalar must be normalized!\n" +
             "	vec3 color = vec3( 0.0, 0.0, 0.0 );\n" +
-            "	if ( scalar >= 0.0 && scalar < 0.1666 ) {\n" +
-            "		color.g = 6.0 * scalar;	\n" +
-            "		color.b = 1.0;\n" +
-            "	} else if ( scalar >= 0.1666 && scalar < 0.3333 ) {\n" +
-            "		color.g = 1.0;\n" +
-            "		color.b = 1.0 - 6.0*(scalar-0.1666);\n" +
-            "	} else if ( scalar >= 0.3333 && scalar < 0.5000 ) {\n" +
-            "		color.r = 6.0 * (scalar - 0.3333);\n" +
-            "		color.g = 1.0;\n" +
-            "	} else if ( scalar >= 0.5000 && scalar < 0.6666 ) {\n" +
-            "		color.r = 1.0;\n" +
-            "		color.g = 1.0 - 6.0 * (scalar - 0.5000);\n" +
-            "	} else if ( scalar >= 0.6666 && scalar < 0.8333 ) {\n" +
-            "       color.r = 1.0;\n" +
-            "       color.b = 6.0 * (scalar - 0.6666);\n" +
-            "   } else {\n" +
-            "       color.r = 1.0 - 6.0 * (scalar - 0.8333);\n" +
-            "       color.b = 1.0;\n" +
+            "	if ( scalar >= 0.0 && scalar < 0.25 ) {\n" +
+            "		color.g = scalar * 4.0;	//green varies linearly between [0,1]\n" +
+            "		color.b = 1.0;			//blue is maxed out\n" +
+            "	} else if ( scalar >= 0.25 && scalar < 0.35 ) {\n" +
+            "		color.g = 1.0;			//green is maxed out\n" +
+            "		color.b = 1.0 - 10.0 * ( scalar - 0.25 );	//blue varies between [1,0]\n" +
+            "	} else if ( scalar >= 0.35 && scalar < 0.75 ) {\n" +
+            "		color.r = ( scalar - 0.35 ) * 2.5;	//red varies between [0,1]\n" +
+            "		color.g = 1.0;					//green is maxed out\n" +
+            "	} else if ( scalar >= 0.75 && scalar <= 1.0 ) {\n" +
+            "		color.r = 1.0;	//red is maxed out\n" +
+            "		color.g = 1.0 - 4.0 * ( scalar - 0.75 );	//green varies between [1,0]\n" +
             "   }\n" +
             "	return vec4( color, 1.0 );\n" +
             "}\n",
