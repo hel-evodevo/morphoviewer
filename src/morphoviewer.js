@@ -328,7 +328,9 @@ var morphoviewer = ( function( tools ) {
             mesh.unbind();
         }
     }
-
+    /**
+     * Set the directional light shader as the active shader.
+     * */
     module.viewIlluminated = function() {
         currentProgram = illuminationProgram;
         currentProgram.use();
