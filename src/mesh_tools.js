@@ -553,7 +553,7 @@ var morphoviewer = ( function( module ) {
         return trace;
     }
 
-    /*norms: the unwrapped vertex normals
+    /* norms: the unwrapped vertex normals
      * returns: an array of scalars for each vertex representing the orientation*/
     module.surfaceOrientation = function( norms ) {
         var regions = [];

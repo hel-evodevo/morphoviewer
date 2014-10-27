@@ -54,6 +54,7 @@ var morphoviewer = ( function( tools ) {
      * supplied, the "glcanvas" id will be searched for.
      */
     module.initialize = function( canvasId ) {
+
         if ( canvasId == undefined ) {
             cid = "glcanvas";
         } else {
@@ -247,21 +248,25 @@ var morphoviewer = ( function( tools ) {
             tools.vertexArrayFromPointCloud( file, onload );
 
         }  else if ( type == "morphobuffer" ) {
-            mesh = new tools.Mesh( gl );
-            var onload = function( model ) {
+            mesh = new tools.Mesh(gl);
+            var onload = function (model) {
                 //vertices have to unwrapped
-                var verts = tools.unwrapVectorArray( model.vertices.v, model.vertices.i );
+                var verts = tools.unwrapVectorArray(model.vertices.v, model.vertices.i);
                 //normals are per-vertex and have to be unwrapped
-                var norms = tools.unwrapVectorArray( model.normals, model.vertices.i );
+                var norms = tools.unwrapVectorArray(model.normals, model.vertices.i);
                 //orientation values are per-vertex and have to be unwrapped
-                var orientation = tools.unwrapArray( model.orientation, model.vertices.i );
+                var orientation = tools.unwrapArray(model.orientation, model.vertices.i);
                 //curvature is per-face and is already unwrapped by the parsing process
-                mesh.meshFromArray( verts, norms, model.curvature, orientation );
+                mesh.meshFromArray(verts, norms, model.curvature, orientation);
                 module.viewHemispherical();
-                var aabb = tools.getAabb( model.vertices.v );
-                camera.setBestPositionForModel( aabb );
+                var aabb = tools.getAabb(model.vertices.v);
+                camera.setBestPositionForModel(aabb);
             };
-            tools.vertexArrayFromMorphobuffer( file, onload );
+            tools.vertexArrayFromMorphobuffer(file, onload);
+
+        } else if ( type == "ply" ) {
+            parsers.load( file, 'ply', function( model ) { alert("Inside the onload of ply loading."); }  );
+
 
         } else {
             throw "morphoviewer.viewData: unrecognized 3d file type";

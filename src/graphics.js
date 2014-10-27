@@ -22,7 +22,6 @@ SOFTWARE.*/
 /* The mgl file (morphoviewer graphics library) defines the morphoviewer namespace
  * and contains utilities for interacting with WebGL, and complete shader programs.*/
 var morphoviewer = ( function( module ) {
-
     //this is a namespace scope helper function for Program
     function getShaderFromDOM( gl, domId ) {
         var shaderScript, theSource, currentChild, shader;
@@ -30,7 +29,7 @@ var morphoviewer = ( function( module ) {
         shaderScript = document.getElementById( domId );
 
         if ( !shaderScript ) {
-            alert("mgl.getShaderFromDOM: no such shader: " + domId );
+            alert("getShaderFromDOM: no such shader: " + domId );
             return null;
         }
 
@@ -51,7 +50,7 @@ var morphoviewer = ( function( module ) {
             shader = getShaderFromString( gl, theSource, "vertex" );
         } else {
             //Unknown shader type
-            alert( "mgl.getShaderFromDOM: unknown shader type, returning null." );
+            alert( "getShaderFromDOM: unknown shader type, returning null." );
             return null;
         }
         return shader;
@@ -67,7 +66,7 @@ var morphoviewer = ( function( module ) {
             shader = gl.createShader( gl.VERTEX_SHADER );
         } else {
             //Unknown shader type
-            alert( "mgl.getShaderFromString: unknown shader type, returning null." );
+            alert( "getShaderFromString: unknown shader type, returning null." );
             return null;
         }
 
@@ -78,7 +77,7 @@ var morphoviewer = ( function( module ) {
 
         //check if compilation was succesful
         if ( !gl.getShaderParameter( shader, gl.COMPILE_STATUS ) ) {
-            alert( "mgl.getShaderFromString: could not compile " + type + " shader: " +
+            alert( "getShaderFromString: could not compile " + type + " shader: " +
                 gl.getShaderInfoLog( shader ) );
             return null;
         }
@@ -108,7 +107,7 @@ var morphoviewer = ( function( module ) {
         gl.linkProgram( program );
         //if linking failure, then log info:
         if ( !gl.getProgramParameter( program, gl.LINK_STATUS ) ) {
-            console.log( "mgl.getProgram: unable to link the shader program " +
+            console.log( "getProgram: unable to link the shader program " +
                 gl.getProgramInfoLog( program ) );
         }
         return program;
@@ -143,7 +142,7 @@ var morphoviewer = ( function( module ) {
      */
     module.Program.prototype.isInUse = function() {
         var currentProgram = 0;
-        this.gl.getIntegerv( this.gl.GL_CURRENT_PROGRAM, currentProgram );
+        this.gl.getIntegerv( this.gl.GL_CURRENT_PROGRAM, currentdisProgram );
         if ( this.object == currentProgram ) {
             return true;
         }
@@ -168,7 +167,7 @@ var morphoviewer = ( function( module ) {
     module.Program.prototype.attribute = function( attributeId ) {
         var attrib = this.gl.getAttribLocation( this.object, attributeId );
         if ( attrib == -1 ) {
-            console.log( "ngl.Program.attribute: shader attribute " + attributeId + " not found." );
+            console.log( "Program.attribute: shader attribute " + attributeId + " not found." );
             return null;
         }
 
@@ -184,7 +183,7 @@ var morphoviewer = ( function( module ) {
     module.Program.prototype.uniform = function( uniformId ) {
         var uniform = this.gl.getUniformLocation( this.object, uniformId );
         if ( uniform == -1 ) {
-            console.log( "mgl.Program.uniform: shader uniform " + uniformId + " not found." );
+            console.log( "Program.uniform: shader uniform " + uniformId + " not found." );
             return null;
         }
 
@@ -212,7 +211,7 @@ var morphoviewer = ( function( module ) {
                 break;
             case "int": this.gl.uniform1i( this.uniform( uniformId ), value );
                 break;
-            default: console.log("mgl.Program.setUniform: unknown type " + opts["type"] );
+            default: console.log("Program.setUniform: unknown type " + opts["type"] );
         }
     };
 
@@ -224,7 +223,6 @@ var morphoviewer = ( function( module ) {
     module.Mesh = function( gl ) {
         this.gl = gl;
         this.vbo = null;	//vertex buffer object must be {Object}
-        this.vno = null;
         this.numVertices = 0;
     };
 
@@ -413,28 +411,28 @@ var morphoviewer = ( function( module ) {
      */
     module.Camera.prototype.setFOV = function( fov ) {
         if ( fov < 0.0 ) {
-            throw "mgl.Camera.setFOV: negative vertical field of view";
+            throw "Camera.setFOV: negative vertical field of view";
         }
         this.verticalFOV = fov;
     };
 
     module.Camera.prototype.setAspectRatio = function( ar ) {
         if ( ar < 0.0 ) {
-            throw "mgl.Camera.setAspectRatio: negative aspect ratio";
+            throw "Camera.setAspectRatio: negative aspect ratio";
         }
         this.aspectRatio = ar;
     };
 
     module.Camera.prototype.setNearPlane = function( near ) {
         if ( near > this.farPlane ) {
-            throw "mgl.Camera.setNearPlane: near plane is farther than the far plane";
+            throw "Camera.setNearPlane: near plane is farther than the far plane";
         }
         this.nearPlane = near;
     };
 
     module.Camera.prototype.setFarPlane = function( far ) {
         if ( far < this.nearPlane ) {
-            throw "mgl.Camera.setFarPlane: far plane is nearer than the near plane";
+            throw "Camera.setFarPlane: far plane is nearer than the near plane";
         }
         this.farPlane = far;
     };
