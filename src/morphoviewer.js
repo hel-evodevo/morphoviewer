@@ -265,8 +265,49 @@ var morphoviewer = ( function( tools ) {
             tools.vertexArrayFromMorphobuffer(file, onload);
 
         } else if ( type == "ply" ) {
-            tools.io.load( file, 'ply', function( model ) { console.log("Morphoviewer PLY load function finished."); }  );
+            mesh = new tools.Mesh( gl );
+            var onload = function( model ) {
+                console.log(model);
+                var verts = [];
+                var vertex = model["vertex"];
+                var vertex_x = vertex["x"];
+                var vertex_y = vertex["y"];
+                var vertex_z = vertex["z"];
+                var length = model["vertex"]["x"].length;
+                for ( var i = 0; i < length; i++ ) {
+                    verts.push( [ vertex_x[i], vertex_y[i], vertex_z[i] ] );
+                }
 
+                var tris = [];
+                var vertex_indices = model["face"]["vertex_indices"];
+                length = vertex_indices.length;
+                for ( var i = 0; i < length; i++ ){
+                    tris.push( vertex_indices[i] );
+                }
+
+                var norms = [];
+                if ( vertex["nx"] !== undefined ) {
+                    var nx = vertex["nx"];
+                    var ny = vertex["ny"];
+                    var nz = vertex["nz"];
+                    for ( var i = 0; i < length; i++ ) {
+                        norms.push( [ nx[i], ny[i], nz[i] ] );
+                    }
+                } else {
+                    norms = tools.vertexNormals( verts, tris );
+                }
+
+                var verts_unwrapped = tools.unwrapVectorArray( verts, tris );
+                var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
+                var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
+                var orientation = tools.surfaceOrientation( norms_unwrapped );
+
+                mesh.meshFromArray( verts_unwrapped, norms_unwrapped, curvature, orientation );
+                module.viewIlluminated();
+                var aabb = tools.getAabb( verts );
+                camera.setBestPositionForModel( aabb );
+            };
+            tools.io.loadPLY( file, onload );
 
         } else {
             throw "morphoviewer.viewData: unrecognized 3d file type";

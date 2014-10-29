@@ -41,7 +41,9 @@ var morphoviewer = ( function( module ) {
         if ( typeof(littleEndian) === "undefined" ) {
             littleEndian = false;
         }
-        arguments.callee.length = buffer.length;
+        if ( typeof(offset) === "undefined" ) {
+            offset = 0;
+        }
         arguments.callee.buffer = buffer;
         arguments.callee.view = jDataView( buffer, offset, buffer.length - offset, littleEndian );
     }
@@ -51,7 +53,7 @@ var morphoviewer = ( function( module ) {
     BufferView.isLittleEndian = function( littleEndian ) {
         var offset = BufferView.view.tell();
         var length = BufferView.buffer.length;
-        BufferView.view = jDataView( BufferView.view, offset, length - offset, littleEndian );
+        BufferView.view = jDataView( BufferView.buffer, offset, length - offset, littleEndian );
     };
 
     BufferView.getChar = function() {
@@ -117,20 +119,29 @@ var morphoviewer = ( function( module ) {
      *
      * @returns {String} a string representing single word on the line*/
     BufferView.readToken = function() {
-        console.log("Inside readToken");
-        if ( BufferView.view.tell() >= BufferView.length ) {
-            throw "BufferView.readToken: index out of file bounds";
+        if ( BufferView.view.tell() >= BufferView.buffer.length ) {
+            console.log("BufferView.readToken: position: " + BufferView.view.tell() + ", length: " + BufferView.buffer.length );
+            throw "BufferView.readToken: current position out of file bounds";
         }
         var res = [];
-        var ch = BufferView.getChar();
-        while ( ch != '\n' || ch != ' ') {
-            if ( BufferView.view.tell() >= BufferView.length ) {
+        var ch;
+        //eat the newlines and spaces away
+        while ( true ) {
+            ch = BufferView.peekChar();
+            if ( ch == '\n' || ch == ' ') {
+                BufferView.getChar();
+            } else {
                 break;
             }
-            res.push( ch );
-            ch = BufferView.getChar();
         }
-        console.log(res.join(""));
+        while ( true ) {
+            ch = BufferView.peekChar();
+            if ( ch == '\n' || ch == ' ' ) {
+                break;
+            } else {
+                res.push( BufferView.getChar() );
+            }
+        }
         return res.join("");
     };
 
@@ -258,7 +269,7 @@ var morphoviewer = ( function( module ) {
         var result = [];
         for ( var i = 0; i < number; i++ ) {
             token = BufferView.readToken();
-            result.push( listParser(token) );
+            result.push( this.listParser(token) );
         }
         this.target.push( result );
     };
@@ -403,26 +414,32 @@ var morphoviewer = ( function( module ) {
     /**
      * @returns {Object} An object, where each element is represented by a named object, and each
      * property by a named array within the object. */
-    module.loadPLY = function( file ) {
-        var buffer = new Uint8Array( file );
-        BufferView( buffer );
-        var parseData = parsePLYHeader();
-        var elementParsers = parseData[0];
-        var resultDict = parseData[1];
-        var format = parseData[2];
+    module.io.loadPLY = function( file, onload ) {
+        var loader = function( data ) {
+            var buffer = new Uint8Array( data );
+            BufferView(buffer);
+            var parseData = parsePLYHeader();
+            var elementParsers = parseData[0];
+            var model = parseData[1];
+            var format = parseData[2];
 
-        if ( format != "ascii" ) {
-            //set as default of jDataview
-            var littleEndian = false;
-            if (format === "little") {
-                littleEndian = true;
+            if (format != "ascii") {
+                //set as default of jDataview
+                var littleEndian = false;
+                if (format === "little") {
+                    littleEndian = true;
+                }
+                BufferView.isLittleEndian(littleEndian);
             }
-            BufferView.isLittleEndian(littleEndian);
-        }
-        parsePLYData( elementParsers );
+            parsePLYData(elementParsers);
 
-        console.log(resultDict);
-        return resultDict;
+            if ( typeof(onload) != undefined ) {
+                onload( model );
+            }
+
+        };
+
+        loadFile( file, loader );
     };
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -443,15 +460,7 @@ var morphoviewer = ( function( module ) {
 
     module.io.load = function( file, type, onload ) {
 
-        var loader = function( data ) {
-            var model = module.loadPLY( data );
-
-            if ( onload != undefined ) {
-                onload( model );
-            }
-        };
-
-        loadFile( file, loader );
+        /**/
     };
 
     return module;
