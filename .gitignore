@@ -41,3 +41,7 @@ atlassian-ide-plugin.xml
 
 # Crashlytics plugin (for Android Studio and IntelliJ)
 com_crashlytics_export_strings.xml
+src/file_io.min.js
+src/graphics.min.js
+src/mesh_tools.min.js
+src/morphoviewer.min.js

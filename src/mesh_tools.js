@@ -21,9 +21,13 @@ SOFTWARE.*/
 /*This file (morphoviewer mesh tools) contains tools for loading point clouds, mesh files, and generating
 * vertex data (vertex normals, face normals, surface curvature, surface orientation)
 * for them.*/
-var morphoviewer = ( function( module ) {
 
-    var EPSILON = 1.0 / 1048576.0;
+
+/**
+ * This file adds mesh processing tools to the morphoviewer namespace. The tools include functions
+ * for calculating vertex normals, triangulation, and calculating various surface properties.
+ * */
+var morphoviewer = ( function( module ) {
 
     function loadFile( file, onload ) {
         var request = new XMLHttpRequest();
@@ -456,7 +460,7 @@ var morphoviewer = ( function( module ) {
         }
 
         return norms;
-    }
+    };
 
     /**
      * Calculates the surface variation, by calculating the Dirichlet Energy for

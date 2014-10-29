@@ -265,7 +265,7 @@ var morphoviewer = ( function( tools ) {
             tools.vertexArrayFromMorphobuffer(file, onload);
 
         } else if ( type == "ply" ) {
-            parsers.load( file, 'ply', function( model ) { alert("Inside the onload of ply loading."); }  );
+            tools.io.load( file, 'ply', function( model ) { console.log("Morphoviewer PLY load function finished."); }  );
 
 
         } else {

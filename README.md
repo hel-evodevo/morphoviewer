@@ -54,35 +54,3 @@ The illuminating hemisphere can be rotated by doing
 ##Changing the camera angle
 The following code will rotate the camera to a predefined view: `morphoviewer.viewLeft()`, `morphoviewer.viewRight()`,
 `morphoviewer.viewTop()`, `morphoviewer.viewBottom()`, `morphoviewer.viewFront()`, `morphoviewer.viewBack()`.
-
-##The morphobuffer file format
-The morphobuffer file format contains the vertex coordinates, the normals, the triangulation, the curvature, and the 
-orientation values. Loading a morphobuffer file means that very little processing is done in the browser. The only 
-processing done is unpacking the values from the file, which is far quicker than triangulating the point cloud in 
-the browser.
-
-The morphobuffer format is a binary file format which consists of a series of single byte identifiers, followed by 
-bytes representing different values. The bytes are written as network-endian (big endian). 
-
-###How the data is packed in the morphobuffer format
-Each vertex is unique and must be listed as such in the file. In the mesh, however, neighboring triangles will share
-vertices. The triangle is defined as three indices into the vertex list.
-
-Per-vertex attributes (values unique to each vertex) are the vertex normals, and the orientation. These must be listed
-in the same order as the vertices are specified in.
-
-Per-face attributes are the surface curvature values. These must be listed in the same order as the triangles are
-specified in.
-
-###Byte fields in the morphobuffer format
-Each byte field starts with a one byte identifier and is followed by a variable number of bytes. The byte fields are
-
-Vertex: 1 byte char (`v`), followed by 3 * 8 bytes, where an 8 byte chunk is one floating point number.
-
-Normal: 1 byte char (`n`), followed by 3 * 8 bytes, where an 8 byte chunk is one floating point number.
-
-Triangle: 1 byte char (`t`), followed by 3 * 4 bytes, where each 4 byte chunk is one unsigned integer.
-
-Curvature: 1 byte char (`c`) followed by 8 bytes representing one floating point number.
-
-Orientation: 1 byte char (`o`) followed by 8 bytes representing one floating point number.

@@ -19,8 +19,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
 
-/* The mgl file (morphoviewer graphics library) defines the morphoviewer namespace
- * and contains utilities for interacting with WebGL, and complete shader programs.*/
+/**
+ * This file adds graphical utilities to the morphoviewer namespace.
+ * */
 var morphoviewer = ( function( module ) {
     //this is a namespace scope helper function for Program
     function getShaderFromDOM( gl, domId ) {
