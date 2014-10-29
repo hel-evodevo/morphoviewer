@@ -56,6 +56,10 @@ var morphoviewer = ( function( module ) {
         BufferView.view = jDataView( BufferView.buffer, offset, length - offset, littleEndian );
     };
 
+    BufferView.tell = function() { return BufferView.view.tell(); };
+
+    BufferView.end = function() { return BufferView.buffer.length; };
+
     BufferView.getChar = function() {
         return BufferView.view.getChar();
     };
@@ -433,7 +437,7 @@ var morphoviewer = ( function( module ) {
             }
             parsePLYData(elementParsers);
 
-            if ( typeof(onload) != undefined ) {
+            if ( typeof(onload) != "undefined" ) {
                 onload( model );
             }
 
@@ -446,15 +450,68 @@ var morphoviewer = ( function( module ) {
     // OBJ parser methods & prototypes
     ////////////////////////////////////////////////////////////////////////////////
 
-    module.loadOBJ = function( file ) {
-        //
+    function parseOBJ() {
+        var target = { "v": [], "f": [] };
+        while ( BufferView.tell() < BufferView.end() ) {
+            var line = BufferView.readLine();
+            var tokens = line.split(" ");
+
+            var verts = target["v"];
+            var tris = target["f"];
+
+            if ( tokens[0] == "v" ) {
+                verts.push([
+                    parseFloat( tokens[1] ),
+                    parseFloat( tokens[2] ),
+                    parseFloat( tokens[3] )
+                ]);
+            }
+            var hasNormals = false;
+            var norms = target["vn"];//undefined if there are no normals
+            if ( tokens[0] == "vn" ) {
+                if ( !hasNormals ) {
+                    target["vn"] = [];
+                    norms = target["vn"];
+                    hasNormals = true;
+                }
+                norms.push([
+                    parseFloat( tokens[1] ),
+                    parseFloat( tokens[2] ),
+                    parseFloat( tokens[3] )
+                ]);
+            }
+            if ( tokens[0] == "f" ) {
+                var tri = [];
+                var ind1 = parseInt( tokens[1] ) - 1;
+                for ( var i = 2; i < tokens.length; i += 2 ) {
+                    var ind2 = parseInt( tokens[i] ) - 1;
+                    var ind3 = parseInt( tokens[i+1] ) - 1;
+                    tri.push( ind1, ind2, ind3 );
+                }
+                tris.push( tri );
+            }
+        }
+        return target;
+    }
+
+    module.io.loadOBJ = function( file, onload ) {
+        var loader = function( data ) {
+            var buffer = new Uint8Array( data );
+            BufferView( buffer );
+            var model = parseOBJ();
+
+            if ( typeof(onload) != "undefined" ) {
+                onload( model );
+            }
+        };
+        loadFile( file, loader );
     };
 
     ////////////////////////////////////////////////////////////////////////////////
     // CSV point cloud parser methods & prototypes
     ////////////////////////////////////////////////////////////////////////////////
 
-    module.loadCSV = function( file ) {
+    module.io.loadCSV = function( file ) {
         //
     };
 

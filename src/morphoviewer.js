@@ -203,28 +203,26 @@ var morphoviewer = ( function( tools ) {
     module.viewData = function( file, type ) {
         if ( type == "obj" ) {
             mesh = new tools.Mesh( gl );
-
-            var onload = function( model ) {
-                tools.centerPointCloud( model.vertices.v );
-                var verts = tools.unwrapVectorArray( model.vertices.v, model.vertices.i );
+            tools.io.loadOBJ( file, function( model ) {
+                var verts = model["v"];
+                var tris = model["f"];
                 var norms;
-                if ( model.normals.v.length == 0 ) {
-                    norms = tools.vertexNormals( model.vertices.v, model.vertices.i );
-                    norms = tools.unwrapVectorArray( norms, model.vertices.i );
+                if ( model["vn"] !== undefined ) {
+                    norms = model["vn"];
                 } else {
-                    norms = tools.unwrapVectorArray( model.normals.v, model.normals.i );
+                    norms = tools.vertexNormals( verts, tris );
                 }
+                tools.centerPointCloud( verts );
+                var verts_unwrapped = tools.unwrapVectorArray( verts, tris );
+                var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
+                var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
+                var orientation = tools.surfaceOrientation( norms_unwrapped );
 
-                var curvature = tools.surfaceVariation( verts, norms );
-                var orientation = tools.surfaceOrientation( norms );
-
-                mesh.meshFromArray( verts, norms, curvature, orientation );
-                module.viewIlluminated();
-                var aabb = tools.getAabb( model.vertices.v );
+                mesh.meshFromArray( verts_unwrapped, norms_unwrapped, curvature, orientation );
+                module.viewHemispherical();
+                var aabb = tools.getAabb( verts );
                 camera.setBestPositionForModel( aabb );
-            };
-
-            tools.vertexArrayFromOBJ( file, onload );
+            } );
 
         } else if ( type == "point cloud" ) {
             mesh = new tools.Mesh( gl );
@@ -266,8 +264,7 @@ var morphoviewer = ( function( tools ) {
 
         } else if ( type == "ply" ) {
             mesh = new tools.Mesh( gl );
-            var onload = function( model ) {
-                console.log(model);
+            tools.io.loadPLY( file, function( model ) {
                 var verts = [];
                 var vertex = model["vertex"];
                 var vertex_x = vertex["x"];
@@ -303,11 +300,10 @@ var morphoviewer = ( function( tools ) {
                 var orientation = tools.surfaceOrientation( norms_unwrapped );
 
                 mesh.meshFromArray( verts_unwrapped, norms_unwrapped, curvature, orientation );
-                module.viewIlluminated();
+                module.viewHemispherical();
                 var aabb = tools.getAabb( verts );
                 camera.setBestPositionForModel( aabb );
-            };
-            tools.io.loadPLY( file, onload );
+            } );
 
         } else {
             throw "morphoviewer.viewData: unrecognized 3d file type";

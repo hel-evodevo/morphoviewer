@@ -38,28 +38,6 @@ var morphoviewer = ( function( module ) {
     }
 
     /**
-     * Load and parse a vertex array from an .OBJ file.
-     *
-     * @param {String} file the file which we want to load
-     * @param {Function} onload the function passes the following object to
-     * onload: { vertices: {Array}, normals: {Array}, indices: {Array} }, where the
-     * first two are arrays of triplets, each triplet representing a point or normal,
-     * respectively. The indices array is an array of triplets containing indices, specifying
-     * how the mesh is triangulated.
-     */
-    module.vertexArrayFromOBJ = function( file, onload ) {
-        var loader = function( data ) {
-            var model = parseOBJ( data );
-
-            if ( onload != undefined ) {
-                onload( model );
-            }
-        };
-
-        loadFile( file, loader );
-    };
-
-    /**
      * Load a point cloud file into a vertex array.
      *
      * @param {String} file
@@ -155,92 +133,6 @@ var morphoviewer = ( function( module ) {
                 m.orientation.push( view.getFloat64() );
             }
         }
-        return m;
-    }
-
-    /*Parses a buffer containing data from a wavefront .OBJ file
-     * Returns vertices, their triangulation, and vertex normals, if possible
-     * This parser does not do anything with groups.*/
-    function parseOBJ( buffer ) {
-        //the model
-        var m = { vertices: { v: [], i: [] }, normals: { v: [], i: [] } };
-
-        var offset = 0.0;
-        var chars = new Uint8Array( buffer );
-
-        while ( offset < chars.length ) {
-            var line = readLine( chars, offset );
-            offset += line.length + 1;
-            line = line.replace(/ +(?= )/g,'');
-            line = line.replace(/(^\s+|\s+$)/g, '');
-            var tokens = line.split(" ");
-
-            if ( tokens[0] == "v" ) {
-                m.vertices.v.push( [
-                    parseFloat( tokens[1] ),
-                    parseFloat( tokens[2] ),
-                    parseFloat( tokens[3] )
-                ] );
-            }
-            if ( tokens[0] == "vn" ) {
-                m.normals.v.push( [
-                    parseFloat( tokens[1] ),
-                    parseFloat( tokens[2] ),
-                    parseFloat( tokens[3] )
-                ] );
-            }
-            if ( tokens[0] == "f" ) {
-                var vlen = m.vertices.v.length;
-                var nlen = m.normals.v.length;
-                var i1 = tokens[1].split("/");
-
-                if ( i1.length == 1 ) {
-                    i1 = parseInt( i1 ) - 1;
-                    if ( i1 < 0 ) i1 = vlen + i1 + 1;
-                    for ( var j = 2; j < tokens.length - 1; j ++ ) {
-                        var i2 = parseInt( tokens[j] ) - 1;
-                        var i3 = parseInt( tokens[j+1] ) - 1;
-                        if ( i2 < 0 ) {
-                            i2 = vlen + i2 + 1;
-                            i3 = vlen + i3 + 1;
-                        }
-                        m.vertices.i.push( [i1, i2, i3] );
-                        if ( m.normals.v.length > 0 ) {
-                            m.normals.i.push( [i1, i2, i3] );
-                        }
-                    }
-                } else {
-                    var vi1 = parseInt( i1[0] ) - 1;
-                    var ni1 = parseInt( i1[2] ) - 1;
-
-                    if ( vi1 < 0 ) vi1 = vlen + vi1 + 1;
-                    if ( ni1 < 0 ) ni1 = nlen + ni1 + 1;
-
-                    //general case for handling convex polygons
-                    for ( var j = 2; j < tokens.length - 1; j++ ) {
-                        //get the next two vertices of the triangle
-                        var i2 = tokens[j].split("/");
-                        var i3 = tokens[j+1].split("/");
-                        var vi2 = parseInt( i2[0] ) - 1;
-                        var vi3 = parseInt( i3[0] ) - 1;
-                        var ni2 = parseInt( i2[2] ) - 1;
-                        var ni3 = parseInt( i3[2] ) - 1;
-                        //handle face definition using negative indices
-                        if ( vi2 < 0 ) {
-                            vi2 = vlen + vi2 + 1;
-                            vi3 = vlen + vi3 + 1;
-                        }
-                        if ( ni2 < 0 ) {
-                            ni2 = nlen + ni2 + 1;
-                            ni3 = nlen + ni3 + 1;
-                        }
-                        m.vertices.push( [vi1, vi2, vi3] );
-                        m.normals.push( [ni1, ni2, ni3] );
-                    }
-                }
-            }
-        }
-
         return m;
     }
 

@@ -24,8 +24,41 @@ is searched for in the DOM.
 ##Loading a file
 To load a file for viewing, simply do `morphoviewer.viewData( name, type)`, where `name` is the name of the file to be displayed,
 and `type` is the type of the file. Valid types are `"obj"` for displaying Wavefront .OBJ files, `"point cloud"` for
-displaying text csv point clouds, and `"morphobuffer"` for displaying binary morphobuffer files (more on this file type
-later).
+displaying text csv point clouds, and `"ply"` for .PLY files (both ASCII and binary).
+
+###Supported Wavefront object file (.OBJ) features
+The library is capable of loading vertices (`v`), vertex normals (`vn`), and faces (`f`). Other types, such as texture
+coordinates (`vt`) are ignored.
+
+The library does NOT support defining faces with negative indices, or defining separate texture coordinate and normal
+indices using the `/` notation.
+
+###Supported Stanford polygonal file format (.PLY) features
+The library can load both binary and Ascii PLY. The library loads the following common features:
+
+`element vertex <element count>`
+
+`property float x`
+
+`property float y`
+
+`property float z`
+
+`property float nx`
+
+`property float ny`
+
+`property float nz`
+
+`element face <element count>`
+
+`property list uchar int vertex_indices`
+
+The `morphoviewer.io.loadPLY()` function returns an object, where each element is it's own named object, and each
+property is an array, belonging to an element object. So the previous header would result in the following object: 
+`{ "vertex": { "x": [], "y": [], "z": [], "nx": [], "ny": [] }, "face": { "vertex_indices": [] } }`.
+
+###Text CSV format
 
 ##Changing projection
 Moprhoviewer.js renders using orthographic projection by default. To control the type of projection used, simply
@@ -54,3 +87,4 @@ The illuminating hemisphere can be rotated by doing
 ##Changing the camera angle
 The following code will rotate the camera to a predefined view: `morphoviewer.viewLeft()`, `morphoviewer.viewRight()`,
 `morphoviewer.viewTop()`, `morphoviewer.viewBottom()`, `morphoviewer.viewFront()`, `morphoviewer.viewBack()`.
+
