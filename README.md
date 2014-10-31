@@ -33,6 +33,9 @@ coordinates (`vt`) are ignored.
 The library does NOT support defining faces with negative indices, or defining separate texture coordinate and normal
 indices using the `/` notation.
 
+The `moprhoviewer.io.loadOBJ(<file>, <onload>)` returns the following object: `{ "v": [], "f": [], "vn": []}`, where
+each array contains a triplet of values.
+
 ###Supported Stanford polygonal file format (.PLY) features
 The library can load both binary and Ascii PLY. The library loads the following common features:
 
@@ -54,11 +57,14 @@ The library can load both binary and Ascii PLY. The library loads the following 
 
 `property list uchar int vertex_indices`
 
-The `morphoviewer.io.loadPLY()` function returns an object, where each element is it's own named object, and each
+The `morphoviewer.io.loadPLY(<file>, <onload>)` function returns an object, where each element is it's own named object, and each
 property is an array, belonging to an element object. So the previous header would result in the following object: 
 `{ "vertex": { "x": [], "y": [], "z": [], "nx": [], "ny": [] }, "face": { "vertex_indices": [] } }`.
 
 ###Text CSV format
+`morphoviewer.io.loadCSV(<file>, <onload>, <delimiter>)` loads files containing `x`, `y`, and `z` coordinates separated
+ by a delimiter. The `<delimiter>` parameter is set to `,` by default. The function returns an the following object:
+ `{ "points": [] }`, where each array element is a triplet of values.
 
 ##Changing projection
 Moprhoviewer.js renders using orthographic projection by default. To control the type of projection used, simply

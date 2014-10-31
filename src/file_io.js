@@ -511,8 +511,39 @@ var morphoviewer = ( function( module ) {
     // CSV point cloud parser methods & prototypes
     ////////////////////////////////////////////////////////////////////////////////
 
-    module.io.loadCSV = function( file ) {
-        //
+    function parseCSV( delimiter ) {
+        var model = { "points": [] };
+        var points = model["points"];
+        while ( BufferView.tell() < BufferView.end() ) {
+            var line = BufferView.readLine();
+            var tokens = line.split( delimiter );
+            points.push([
+                parseFloat( tokens[0] ),
+                parseFloat( tokens[1] ),
+                parseFloat( tokens[2] )
+            ]);
+        }
+        return model;
+    }
+
+    /**
+     * @param {String} file the name of the file to be loaded
+     * @param {Function} onload the function to be executed once the file has been received
+     * @param {String} delimiter the separator used in the file, set to comma by default */
+    module.io.loadCSV = function( file, onload, delimiter ) {
+        if ( typeof(delimiter) !== "undefined" ) {
+            delimiter = ",";
+        }
+        var loader  =function( data ) {
+            var buffer = new Uint8Array( data );
+            BufferView( buffer );
+            var model = parseCSV( delimiter );
+
+            if ( typeof(onload) != "undefined" ) {
+                onload( model );
+            }
+        };
+        loadFile( file, loader );
     };
 
     module.io.load = function( file, type, onload ) {
