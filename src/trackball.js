@@ -62,7 +62,7 @@ var morphoviewer = ( function( module ) {
         this.vboxz = null;
         this.vboyz = null;
 
-        this.setRadius( 2.0 );
+        this.setRadius( 1.4 );
     };
 
     module.Trackball.prototype.setRadius = function( radius ) {

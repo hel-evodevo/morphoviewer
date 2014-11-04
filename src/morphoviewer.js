@@ -53,6 +53,8 @@ var morphoviewer = ( function( tools ) {
     var mouse = { prevX: 0, prevY: 0,
         dx: 0, dy: 0 };
 
+    var leftMouseButtonDown = false;
+
     /**
      * Initialize the morphoviewer.
      *
@@ -103,7 +105,7 @@ var morphoviewer = ( function( tools ) {
 
         //the morphoviewer has only one camera
         var aspectRatio = canvas.clientWidth / canvas.clientHeight;
-        camera = new tools.Camera( Math.PI * 67.0 / 180.0, aspectRatio, 0.01, 1000.0 );
+        camera = new tools.Camera( Math.PI * 60.0 / 180.0, aspectRatio, 0.01, 1000.0 );
 
         initShaders();
 
@@ -169,6 +171,7 @@ var morphoviewer = ( function( tools ) {
         mouse.prevY = event.pageY;
         switch ( event.which ) {
             case 1:
+                leftMouseButtonDown = true;
                 canvas.onmousemove = function( e ) {
                     onMouseMove( e );
                     camera.orbit( mouse.dx * 0.004, mouse.dy * 0.004 );
@@ -184,6 +187,24 @@ var morphoviewer = ( function( tools ) {
     }
 
     function onMouseUp( event ) {
+        if ( !event.which && event.button ) {
+            if ( event.button & 1 ) {		//Left
+                event.which = 1;
+            } else if ( event.button & 4 ) {//Middle
+                event.which = 2;
+            } else if ( event.button & 2 ) {//Right
+                event.which = 3;
+            }
+        }
+
+        switch ( event.which ) {
+            case 1:
+                leftMouseButtonDown = false;
+            case 2:
+                //
+            case 3:
+                //
+        }
         canvas.onmousemove = function( e ) {return false;};
     }
 
@@ -213,19 +234,24 @@ var morphoviewer = ( function( tools ) {
             lineProgram.use();
             tools.lineShader.camera = camera.matrix();
             tools.lineShader.model = modelView;
-            //blue
-            tools.lineShader.surfaceColor = vec3.fromValues(0.38, 0.38, 1.0);
-            tools.lineShader.setUniforms( lineProgram );
-            trackball.drawXYCircle( lineProgram );
-            //green
-            tools.lineShader.surfaceColor = vec3.fromValues( 0.38, 1.0, 0.38 );
-            tools.lineShader.setUniforms( lineProgram );
-            trackball.drawXZCircle( lineProgram );
-            //red
-            tools.lineShader.surfaceColor = vec3.fromValues( 1.0, 0.38, 0.38 );
-            tools.lineShader.setUniforms( lineProgram );
-            trackball.drawYZCircle( lineProgram );
-
+            tools.lineShader.surfaceColor = vec3.fromValues( 0.7, 0.7, 0.7 );
+            if ( leftMouseButtonDown ) {
+                //blue
+                tools.lineShader.surfaceColor = vec3.fromValues(0.38, 0.38, 1.0);
+                tools.lineShader.setUniforms(lineProgram);
+                trackball.drawXYCircle(lineProgram);
+                //green
+                tools.lineShader.surfaceColor = vec3.fromValues(0.38, 1.0, 0.38);
+                tools.lineShader.setUniforms(lineProgram);
+                trackball.drawXZCircle(lineProgram);
+                //red
+                tools.lineShader.surfaceColor = vec3.fromValues(1.0, 0.38, 0.38);
+                tools.lineShader.setUniforms(lineProgram);
+                trackball.drawYZCircle(lineProgram);
+            } else {
+                tools.lineShader.setUniforms( lineProgram );
+                trackball.draw( lineProgram );
+            }
             lineProgram.stopUsing();
 
             currentProgram.use();
