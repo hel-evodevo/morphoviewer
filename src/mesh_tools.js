@@ -109,10 +109,15 @@ var morphoviewer = ( function( module ) {
             if ( verts[i][2] > zmax ) { zmax = verts[i][2]; }
         }
 
+        var sqrDist = ( xmax - xmin ) * (xmax - xmin );
+        sqrDist += ( ymax - ymin ) * ( ymax - ymin );
+        sqrDist += ( zmax - zmin ) * ( zmax - zmin );
+
         return {
             min: { x: xmin, y: ymin, z: zmin },
             max: { x: xmax, y: ymax, z: zmax },
-            center: { x: xmin+xmax / 2.0, y: ymin+ymax / 2.0, z: zmin+zmax / 2.0 }
+            center: { x: xmin+xmax / 2.0, y: ymin+ymax / 2.0, z: zmin+zmax / 2.0 },
+            length: Math.sqrt( sqrDist )
         };
     };
 
@@ -241,7 +246,7 @@ var morphoviewer = ( function( module ) {
      * with previous methods in isolation and in combination".
      *
      * @param {Array} verts unwrapped vertex array
-     * @param {Array} vNorms	unwrapped vertex normal array
+     * @param {Array} vNorms unwrapped vertex normal array
      * @returns {Array} Gives each vertex a color based on the surface variation of the polygon.
      */
     module.surfaceVariation = function( verts, vNorms ) {

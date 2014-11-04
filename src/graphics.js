@@ -85,6 +85,10 @@ var morphoviewer = ( function( module ) {
         return shader;
     }
 
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // Shader program class
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * @class Creates a webGL shader program containing a vertex shader and fragment shader.
      * @name Program
@@ -143,7 +147,7 @@ var morphoviewer = ( function( module ) {
      */
     module.Program.prototype.isInUse = function() {
         var currentProgram = 0;
-        this.gl.getIntegerv( this.gl.GL_CURRENT_PROGRAM, currentdisProgram );
+        //this.gl.getIntegerv( this.gl.GL_CURRENT_PROGRAM, currentProgram );
         if ( this.object == currentProgram ) {
             return true;
         }
@@ -216,6 +220,10 @@ var morphoviewer = ( function( module ) {
         }
     };
 
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // Mesh class
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * @class This class is a wrapper for vertex buffer objects.
      *
@@ -275,7 +283,8 @@ var morphoviewer = ( function( module ) {
         //after the vertex data will come the normal vector data
         //will have to use vertexAttribPointer to set the correct offset for this vector
         //I want to have only on vertex buffer object
-        this.gl.bufferData( this.gl.ARRAY_BUFFER,
+        this.gl.bufferData(
+            this.gl.ARRAY_BUFFER,
             new Float32Array( vertexArray ),
             this.gl.STATIC_DRAW
         );
@@ -304,6 +313,10 @@ var morphoviewer = ( function( module ) {
     module.Mesh.prototype.unbind = function() {
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, null );
     };
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // Camera class
+    /////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * @class Contains methods for manipulating the properties, position & orientation
@@ -625,7 +638,10 @@ var morphoviewer = ( function( module ) {
         this.azimuth = Math.PI;
     };
 
-    //shaders
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    // Shader strings and attribute methods
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+
     module.directional =  {
         materialShininess: 40.0,
         materialSurfaceColor: vec3.fromValues( 0.6, 0.6, 0.6 ),
@@ -1007,6 +1023,43 @@ var morphoviewer = ( function( module ) {
             "void main() {\n" +
             "	gl_FragColor = vec4(fragColor, 1.0 );\n" +
             "}"
+    };
+
+    module.lineShader = {
+        camera: mat4.create(),
+        model: mat4.create(),
+        surfaceColor: vec3.fromValues( 0.8, 0.8, 0.8 ),
+
+        enableAttributes: function( gl, program ) {
+            gl.enableVertexAttribArray( program.attribute( "vert" ) );
+        },
+
+        setAttributes: function( gl, program ) {
+            gl.vertexAttribPointer( program.attribute( "vert" ),
+                3, gl.FLOAT, false, 0, 0 );
+        },
+
+        setUniforms: function( program ) {
+            program.setUniform( "camera", this.camera, { type: "mat4" } );
+            program.setUniform( "model", this.model, { type: "mat4" } );
+            program.setUniform( "surfaceColor", this.surfaceColor, {type:"vec3"} );
+        },
+        vertex:
+        "attribute vec3 vert;\n" +
+
+        "uniform mat4 camera;\n" +
+        "uniform mat4 model;\n" +
+
+        "void main( void ) {\n" +
+        "	gl_Position = camera * model * vec4( vert, 1.0 );\n" +
+        "}",
+        fragment:
+        "uniform mediump vec3 surfaceColor;\n" +
+        "varying mediump vec3 barycentricPos;\n" +
+
+        "void main( void ) {\n" +
+        "	gl_FragColor = vec4( surfaceColor, 1.0 );\n" +
+        "}"
     };
 
     return module;

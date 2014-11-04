@@ -35,11 +35,17 @@ var morphoviewer = ( function( tools ) {
     var modelView = mat4.create();	//identity matrix, models centered at (0, 0, 0)
     var mesh;
 
+    //tracking ball
+    var showTrackball = true;
+    var trackball;
+
     var renderFunctor = function() {};	//do nothing initially
 
     var wireframeProgram;	//the wireframe shader program
     var illuminationProgram;//the illumination shader program
     var colorProgram;		//the surface curvature shader program
+    var lineProgram;        //the shader for drawing lines
+    var hemisphereProgram;
     var currentProgram;
 
     var timer;
@@ -100,6 +106,8 @@ var morphoviewer = ( function( tools ) {
         camera = new tools.Camera( Math.PI * 67.0 / 180.0, aspectRatio, 0.01, 1000.0 );
 
         initShaders();
+
+        trackball = new tools.Trackball( gl );
     };
 
     function initWebGL( canvas ) {
@@ -125,6 +133,13 @@ var morphoviewer = ( function( tools ) {
 
         hemisphereProgram = new tools.Program( gl );
         hemisphereProgram.programFromString( tools.hemisphere.vertex, tools.hemisphere.fragment );
+
+        lineProgram = new tools.Program( gl );
+        lineProgram.programFromString( tools.lineShader.vertex, tools.lineShader.fragment );
+        tools.lineShader.enableAttributes( gl, lineProgram );
+        tools.lineShader.setAttributes( gl, lineProgram );
+
+        currentProgram = hemisphereProgram;
     }
 
     function onMouseWheel( e ) {
@@ -147,8 +162,9 @@ var morphoviewer = ( function( tools ) {
                 event.which = 3;
             }
         }
-        /*Update mouse coordinates so that we don't create
-         * a huge delta in the opposite direction*/
+        /* Update mouse coordinates so that we don't create
+         * a huge delta in the opposite direction
+         */
         mouse.prevX = event.pageX;
         mouse.prevY = event.pageY;
         switch ( event.which ) {
@@ -191,6 +207,30 @@ var morphoviewer = ( function( tools ) {
 
         renderFunctor();
 
+        if ( showTrackball ) {
+            currentProgram.stopUsing();
+
+            lineProgram.use();
+            tools.lineShader.camera = camera.matrix();
+            tools.lineShader.model = modelView;
+            //blue
+            tools.lineShader.surfaceColor = vec3.fromValues(0.38, 0.38, 1.0);
+            tools.lineShader.setUniforms( lineProgram );
+            trackball.drawXYCircle( lineProgram );
+            //green
+            tools.lineShader.surfaceColor = vec3.fromValues( 0.38, 1.0, 0.38 );
+            tools.lineShader.setUniforms( lineProgram );
+            trackball.drawXZCircle( lineProgram );
+            //red
+            tools.lineShader.surfaceColor = vec3.fromValues( 1.0, 0.38, 0.38 );
+            tools.lineShader.setUniforms( lineProgram );
+            trackball.drawYZCircle( lineProgram );
+
+            lineProgram.stopUsing();
+
+            currentProgram.use();
+        }
+
         timer = new Date();
     }
 
@@ -221,6 +261,7 @@ var morphoviewer = ( function( tools ) {
                 mesh.meshFromArray( verts_unwrapped, norms_unwrapped, curvature, orientation );
                 module.viewHemispherical();
                 var aabb = tools.getAabb( verts );
+                trackball.setRadius( aabb.length / 2.3 );
                 camera.setBestPositionForModel( aabb );
             } );
 
@@ -241,6 +282,7 @@ var morphoviewer = ( function( tools ) {
                 mesh.meshFromArray( verts_unwrapped, norms_unwrapped, curvature, orientation );
                 module.viewHemispherical();
                 var aabb = tools.getAabb( verts );
+                trackball.setRadius( aabb.length / 2.3 );
                 camera.setBestPositionForModel( aabb );
             }, ',' );
 
@@ -284,6 +326,7 @@ var morphoviewer = ( function( tools ) {
                 mesh.meshFromArray( verts_unwrapped, norms_unwrapped, curvature, orientation );
                 module.viewHemispherical();
                 var aabb = tools.getAabb( verts );
+                trackball.setRadius( aabb.length / 2.3 );
                 camera.setBestPositionForModel( aabb );
             } );
 
@@ -298,13 +341,11 @@ var morphoviewer = ( function( tools ) {
     module.viewWireframe = function() {
         currentProgram = wireframeProgram;
         currentProgram.use();
-        mesh.bind();
-        tools.wireframe.enableAttributes( gl, currentProgram );
-        tools.wireframe.setAttributes( gl, currentProgram, mesh.vertices() );
-        mesh.unbind();
+        setWireFrame();
 
         renderFunctor = function() {
             mesh.bind();
+            tools.wireframe.setAttributes( gl, currentProgram, mesh.vertices() );
             tools.wireframe.camera = camera.matrix();
             tools.wireframe.model = modelView;
             tools.wireframe.setUniforms( currentProgram );
@@ -312,6 +353,13 @@ var morphoviewer = ( function( tools ) {
             mesh.unbind();
         };
     };
+
+    function setWireFrame() {
+        mesh.bind();
+        tools.wireframe.enableAttributes(gl, currentProgram);
+        tools.wireframe.setAttributes(gl, currentProgram, mesh.vertices());
+        mesh.unbind();
+    }
 
     /**
      * Color the surface of the object according to the discreet orientation of each polygon.
@@ -345,6 +393,7 @@ var morphoviewer = ( function( tools ) {
 
         renderFunctor = function() {
             mesh.bind();
+            tools.color.setAttributes( gl, currentProgram, mesh.vertices() );
             tools.color.camera = camera.matrix();
             tools.color.model = modelView;
             tools.color.setUniforms( currentProgram );
@@ -366,6 +415,7 @@ var morphoviewer = ( function( tools ) {
 
         renderFunctor = function() {
             mesh.bind();
+            tools.directional.setAttributes( gl, currentProgram, mesh.vertices() );
             tools.directional.camera = camera.matrix();
             tools.directional.model = modelView;
             tools.directional.cameraPosition = camera.getPosition();
@@ -390,7 +440,7 @@ var morphoviewer = ( function( tools ) {
 
         renderFunctor = function() {
             mesh.bind();
-
+            tools.hemisphere.setAttributes( gl, currentProgram, mesh.vertices() );
             tools.hemisphere.camera = camera.matrix();
             tools.hemisphere.model = modelView;
             tools.hemisphere.setUniforms( currentProgram );
@@ -439,13 +489,27 @@ var morphoviewer = ( function( tools ) {
         camera.positionBack();
     };
 
+    /**
+     * Show the tracking ball (on by default).
+     * */
+    module.showTrackingball = function() {
+        showTrackball = true;
+    };
+
+    /**
+     * Hide the tracking ball.
+     * */
+    module.hideTrackingball = function() {
+        showTrackball = false;
+    };
+
     module.color = {
-        black: vec3.fromValues(0.0, 0.0, 0.0),
-        white: vec3.fromValues(1.0, 1.0, 1.0),
-        lightgray: vec3.fromValues(0.91, 0.91, 0.91),
-        lightgrey: vec3.fromValues(0.91, 0.91, 0.91),
-        darkgray: vec3.fromValues(0.41, 0.41, 0.41),
-        darkgrey: vec3.fromValues(0.41, 0.41, 0.41)
+        black: vec3.fromValues( 0.0, 0.0, 0.0 ),
+        white: vec3.fromValues( 1.0, 1.0, 1.0 ),
+        lightgray: vec3.fromValues( 0.91, 0.91, 0.91 ),
+        lightgrey: vec3.fromValues( 0.91, 0.91, 0.91 ),
+        darkgray: vec3.fromValues( 0.41, 0.41, 0.41 ),
+        darkgrey: vec3.fromValues( 0.41, 0.41, 0.41 )
     };
 
     /**
@@ -469,6 +533,12 @@ var morphoviewer = ( function( tools ) {
     module.setLightAzimuthalAngle = function( phi ) {
         tools.hemisphere.azimuth = phi;
     };
+
+    //re-export the io namespace
+    module.io = {};
+    module.io.loadPLY = tools.io.loadPLY;
+    module.io.loadOBJ = tools.io.loadOBJ;
+    module.io.loadCSV = tools.io.loadCSV;
 
     return module;
 }( morphoviewer ));
