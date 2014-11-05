@@ -577,29 +577,35 @@ var morphoviewer = ( function( module ) {
      * @returns {vec3} the normalized vector pointing forward in the local coordinate system
      */
     module.Camera.prototype.forward = function() {
-        var rot = mat4.create();
-        mat4.fromQuat( rot, this.orientation );
-        mat4.invert( rot, rot );
-        var forward = vec4.fromValues( 0.0, 0.0, -1.0, 1.0 );
-        vec4.transformMat4( forward, forward, rot );
-        return vec3.fromValues( forward[0], forward[1], forward[2] );
+        /*var rot = mat4.create();
+         mat4.fromQuat( rot, this.orientation );
+         mat4.invert( rot, rot );
+         var forward = vec4.fromValues( 0.0, 0.0, -1.0, 1.0 );
+         vec4.transformMat4( forward, forward, rot );
+         return vec3.fromValues( forward[0], forward[1], -forward[2] );*/
+        var norm = vec3.normalize( vec3.create(), this.position );
+        return vec3.fromValues( -norm[0], -norm[1], -norm[2] );
     };
 
     module.Camera.prototype.right = function() {
-        var rot = mat4.fromQuat( mat4.create(), this.orientation );
-        mat4.invert( rot, rot );
-        var right = vec4.fromValues( 1.0, 0.0, 0.0, 1.0 );
-        vec4.transformMat4( right, right, rot );
-        return vec3.fromValues( right[0], right[1], right[2] );
+        /*var rot = mat4.fromQuat( mat4.create(), this.orientation );
+         mat4.invert( rot, rot );
+         var right = vec4.fromValues( 1.0, 0.0, 0.0, 1.0 );
+         vec4.transformMat4( right, right, rot );
+         return vec3.fromValues( right[0], right[1], -right[2] );*/
+        var x = this.radius * Math.sin( this.polar ) * Math.cos( this.azimuth );
+        var z = - this.radius * Math.sin( this.polar ) * Math.sin( this.azimuth );
+        return vec3.normalize( vec3.create(), vec3.fromValues( x, 0.0, z ) );
     };
 
     module.Camera.prototype.up = function() {
-        var rot = mat4.create();
-        mat4.fromQuat( rot, this.orientation );
-        mat4.invert( rot, rot );
-        var up = vec4.fromValues( 0.0, 1.0, 0.0, 1.0 );
-        vec4.transformMat4( up, up, rot );
-        return vec3.fromValues( up[0], up[1], up[2] );
+        /*var rot = mat4.create();
+         mat4.fromQuat( rot, this.orientation );
+         mat4.invert( rot, rot );
+         var up = vec4.fromValues( 0.0, 1.0, 0.0, 1.0 );
+         vec4.transformMat4( up, up, rot );
+         return vec3.fromValues( up[0], up[1], -up[2] );*/
+        return vec3.cross( vec3.create(), this.right(), this.forward() );
     };
 
     module.Camera.prototype.positionLeft = function() {
@@ -636,6 +642,13 @@ var morphoviewer = ( function( module ) {
         this.targetCenter = vec3.fromValues( 0.0, 0.0, 0.0 );
         this.polar = Math.PI / 2.0;
         this.azimuth = Math.PI;
+    };
+
+    /**
+     *@returns {Number} the camera's distance from the origin
+     * */
+    module.Camera.prototype.distanceFromOrigin = function() {
+        return this.radius;
     };
 
     /////////////////////////////////////////////////////////////////////////////////////////////////

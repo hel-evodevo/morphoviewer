@@ -32,8 +32,15 @@ var morphoviewer = ( function( tools ) {
 
     var fps = 40.0;
     var camera;
+    //this is the model view matrix of the mesh.
+    //the tracking ball stays centered at (0, 0, 0) at all times and thus
+    //doesn't have it's own matrix
     var modelView = mat4.create();	//identity matrix, models centered at (0, 0, 0)
     var mesh;
+
+    //position parameters of mesh
+    var position = vec3.fromValues( 0.0, 0.0, 0.0 );
+    var targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
 
     //tracking ball
     var showTrackball = true;
@@ -180,7 +187,14 @@ var morphoviewer = ( function( tools ) {
             case 3:
                 canvas.onmousemove = function( e ) {
                     onMouseMove( e );
-                    camera.pan( mouse.dx * -0.01, mouse.dy * 0.01 );
+                    var up = vec3.scale(vec3.create(), camera.up(), -mouse.dy * camera.distanceFromOrigin() * 0.001 ) ;
+                    var right = vec3.scale( vec3.create(), camera.right(), mouse.dx * camera.distanceFromOrigin() * 0.001 );
+                    //mat4.translate( modelView, modelView, up );
+                    //mat4.translate( modelView, modelView, right );
+                    //targetPosition += up;
+                    //targetPosition += right;
+                    vec3.add( targetPosition, targetPosition, up );
+                    vec3.add( targetPosition, targetPosition, right );
                 };
                 break;
         }
@@ -217,12 +231,35 @@ var morphoviewer = ( function( tools ) {
         mouse.prevY = y;
     }
 
+    /**
+     * @param {Object} a
+     * @param {Object} b
+     * @param {Number} t
+     * */
+    function lerp( a, b, t ) {
+        if ( t > 1.0 ) t = 1.0;
+        return vec3.add(
+            vec3.create(),
+            a,
+            vec3.scale(
+                vec3.create(),
+                vec3.subtract( vec3.create(), b, a ),
+                t
+            )
+        );
+    }
+
     function drawScene() {
         gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
         var endTime = new Date();
         var deltaTime = endTime - timer;
         deltaTime /= 1000.0;
+
+        //update mesh position
+        position = lerp( position, targetPosition, 0.5 * (1.0 - 1.0 / fps) );
+        modelView = mat4.create();
+        mat4.translate( modelView, modelView, position );
 
         camera.update( deltaTime );
 
@@ -233,7 +270,7 @@ var morphoviewer = ( function( tools ) {
 
             lineProgram.use();
             tools.lineShader.camera = camera.matrix();
-            tools.lineShader.model = modelView;
+            tools.lineShader.model = mat4.create();
             tools.lineShader.surfaceColor = vec3.fromValues( 0.7, 0.7, 0.7 );
             if ( leftMouseButtonDown ) {
                 //blue
@@ -483,7 +520,6 @@ var morphoviewer = ( function( tools ) {
         camera.viewAsOrtho();
     };
 
-
     /**
      * View with perspective projection.
      */
@@ -492,26 +528,32 @@ var morphoviewer = ( function( tools ) {
     };
 
     module.viewLeft = function() {
+        targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
         camera.positionLeft();
     };
 
     module.viewRight = function() {
+        targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
         camera.positionRight();
     };
 
     module.viewTop = function() {
+        targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
         camera.positionTop();
     };
 
     module.viewBottom = function() {
+        targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
         camera.positionBottom();
     };
 
     module.viewFront = function() {
+        targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
         camera.positionFront();
     };
 
     module.viewBack = function() {
+        targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
         camera.positionBack();
     };
 
