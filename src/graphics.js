@@ -94,8 +94,6 @@ var morphoviewer = ( function( module ) {
      * @name Program
      *
      * @param {Object} gl a valid webGL context
-     * @param {String} vertexId the DOM id of the vertex shader code
-     * @param {String} fragmentId the DOM id of the fragment shader code
      */
     module.Program = function( gl ) {
         this.gl = gl;
@@ -250,7 +248,8 @@ var morphoviewer = ( function( module ) {
      *
      * @param {Array} vertexArray
      * @param {Array} normalArray
-     * @param {Array} colorArray (optional) array of vertex colors.
+     * @param {Array} curvatureArray
+     * @param {Array} orientationArray
      */
     module.Mesh.prototype.meshFromArray = function( vertexArray, normalArray,
                                                     curvatureArray, orientationArray ) {
@@ -270,7 +269,7 @@ var morphoviewer = ( function( module ) {
             barycentric[i+7] = 0.0;
             barycentric[i+8] = 1.0;
         }
-        vertexArray = vertexArray.concat( barycentric)
+        vertexArray = vertexArray.concat( barycentric);
         vertexArray = vertexArray.concat( normalArray );
         vertexArray = vertexArray.concat( curvatureArray );
         vertexArray = vertexArray.concat( orientationArray );
@@ -336,14 +335,12 @@ var morphoviewer = ( function( module ) {
         this.targetRadius = 2.0;
         this.radius = 10.0;
 
-        this.center	= vec3.fromValues( 0.0, 0.0, 0.0 );
-        this.targetCenter = vec3.fromValues( 0.0, 0.0, 0.0 );
-
         this.polar = Math.PI / 2.0;
         this.azimuth = 0.0;
+        this.rotation = 0.0;    //the rotation angle about the local forward vector
+        this.rotationMatrix = mat3.create();
 
         this.viewTransform = mat4.create();
-        this.orientation = quat.fromValues( 0.0, 0.0, 0.0, 0.0 );
 
         this.sensitivity = 0.1 * this.radius;
 
@@ -412,12 +409,11 @@ var morphoviewer = ( function( module ) {
     };
 
     module.Camera.prototype.getPosition = function() {
-        var pos = vec3.fromValues(
+        return vec3.fromValues(
             -this.position[0],
             -this.position[1],
             -this.position[2]
         );
-        return pos;
     };
 
     /**
@@ -449,17 +445,6 @@ var morphoviewer = ( function( module ) {
             throw "Camera.setFarPlane: far plane is nearer than the near plane";
         }
         this.farPlane = far;
-    };
-
-    /**
-     * Pan the focal point around the camera's local XY plane
-     */
-    module.Camera.prototype.pan = function( movex, movey ) {
-        deltaX = vec3.scale( vec3.create(), this.right(), this.sensitivity * movex );
-        vec3.add( this.targetCenter, this.targetCenter, deltaX );
-
-        deltaY = vec3.scale( vec3.create(), this.up(), this.sensitivity * movey );
-        vec3.add( this.targetCenter, this.targetCenter, deltaY );
     };
 
     /**
@@ -526,7 +511,6 @@ var morphoviewer = ( function( module ) {
         //update values
         this.zoomFactor = lerp( this.zoomFactor, this.targetZoomFactor, dt * 20 );
         this.radius = lerp( this.radius, this.targetRadius, dt * 20 );
-        vec3.lerp( this.center, this.center, this.targetCenter, dt * 20 );
         this.sensitivity = 0.1 * this.radius;
 
         var offset = vec3.fromValues(
@@ -535,29 +519,21 @@ var morphoviewer = ( function( module ) {
             Math.sin( this.polar ) * Math.cos( this.azimuth )
         );
 
-        this.targetPosition = vec3.add(
+        this.targetPosition = vec3.scale(
             vec3.create(),
-            this.center,
-            vec3.scale(
-                vec3.create(),
-                offset,
-                this.radius
-            )
+            offset,
+            this.radius
         );
         vec3.lerp( this.position, this.position, this.targetPosition, dt * 20 );
 
-        var right = vec3.cross( vec3.create(), offset, vec3.fromValues( 0.0, 1.0, 0.0));
+        /*var right = vec3.cross( vec3.create(), offset, vec3.fromValues( 0.0, 1.0, 0.0));
         vec3.normalize( right, right );
-        var up = vec3.cross( vec3.create(), right, offset );	//get the new up vector
+        var up = vec3.cross( vec3.create(), right, offset );	//get the new up vector*/
         mat4.lookAt(
             this.viewTransform,
             this.position,
-            this.center,
-            up
-        );
-        quat.fromMat3(
-            this.orientation,
-            mat3.fromMat4( mat3.create(), this.viewTransform )
+            vec3.create( 0.0, 0.0, 0.0 ),
+            this.up()
         );
     };
 
@@ -577,34 +553,17 @@ var morphoviewer = ( function( module ) {
      * @returns {vec3} the normalized vector pointing forward in the local coordinate system
      */
     module.Camera.prototype.forward = function() {
-        /*var rot = mat4.create();
-         mat4.fromQuat( rot, this.orientation );
-         mat4.invert( rot, rot );
-         var forward = vec4.fromValues( 0.0, 0.0, -1.0, 1.0 );
-         vec4.transformMat4( forward, forward, rot );
-         return vec3.fromValues( forward[0], forward[1], -forward[2] );*/
         var norm = vec3.normalize( vec3.create(), this.position );
         return vec3.fromValues( -norm[0], -norm[1], -norm[2] );
     };
 
     module.Camera.prototype.right = function() {
-        /*var rot = mat4.fromQuat( mat4.create(), this.orientation );
-         mat4.invert( rot, rot );
-         var right = vec4.fromValues( 1.0, 0.0, 0.0, 1.0 );
-         vec4.transformMat4( right, right, rot );
-         return vec3.fromValues( right[0], right[1], -right[2] );*/
         var x = this.radius * Math.sin( this.polar ) * Math.cos( this.azimuth );
         var z = - this.radius * Math.sin( this.polar ) * Math.sin( this.azimuth );
         return vec3.normalize( vec3.create(), vec3.fromValues( x, 0.0, z ) );
     };
 
     module.Camera.prototype.up = function() {
-        /*var rot = mat4.create();
-         mat4.fromQuat( rot, this.orientation );
-         mat4.invert( rot, rot );
-         var up = vec4.fromValues( 0.0, 1.0, 0.0, 1.0 );
-         vec4.transformMat4( up, up, rot );
-         return vec3.fromValues( up[0], up[1], -up[2] );*/
         return vec3.cross( vec3.create(), this.right(), this.forward() );
     };
 
