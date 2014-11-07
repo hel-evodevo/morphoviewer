@@ -57,7 +57,9 @@ var morphoviewer = ( function( tools ) {
 
     var timer;
 
-    var mouse = { prevX: 0, prevY: 0,
+    var mouse = {
+        x: 0, y:0,
+        prevX: 0, prevY: 0,
         dx: 0, dy: 0 };
 
     var leftMouseButtonDown = false;
@@ -77,6 +79,8 @@ var morphoviewer = ( function( tools ) {
         }
         //declared globally for later use
         canvas = document.getElementById( cid );
+        canvasWidth = canvas.width;
+        canvasHeight = canvas.height;
 
         //Event handlers for input
         canvas.onmousedown = onMouseDown;
@@ -117,6 +121,12 @@ var morphoviewer = ( function( tools ) {
         initShaders();
 
         trackball = new tools.Trackball( gl );
+
+        setInterval(function() {
+            console.log(
+                trackball.getRadius() / camera.getMaxSphereRadius()
+            );
+        }, 1000.0);
     };
 
     function initWebGL( canvas ) {
@@ -181,7 +191,26 @@ var morphoviewer = ( function( tools ) {
                 leftMouseButtonDown = true;
                 canvas.onmousemove = function( e ) {
                     onMouseMove( e );
-                    camera.orbit( mouse.dx * 0.004, mouse.dy * 0.004 );
+                    camera.orbit(
+                        mouse.dx * 0.004,// * getTrackballDampeningFactor(),
+                        mouse.dy * 0.004// * getTrackballDampeningFactor()
+                    );
+                    var rotation = 0.0;
+                    var rect = canvas.getBoundingClientRect();
+                    var x = mouse.x - rect.left - canvasWidth / 2.0;
+                    var y = mouse.y - rect.top - canvasHeight / 2.0;
+                    var factor = 0.004;
+                    if ( x < 0.0 ) {
+                        rotation += - factor * mouse.dy;
+                    } else {
+                        rotation += factor * mouse.dy;
+                    }
+                    if ( y < 0.0 ) {
+                        rotation += - factor * mouse.dx;
+                    } else {
+                        rotation += factor * mouse.dx;
+                    }
+                    //camera.rotate( ( 1.0 - getTrackballDampeningFactor() ) * rotation );
                 };
                 break;
             case 3:
@@ -214,21 +243,45 @@ var morphoviewer = ( function( tools ) {
         switch ( event.which ) {
             case 1:
                 leftMouseButtonDown = false;
+                break;
             case 2:
                 //
+                break;
             case 3:
                 //
+                break;
         }
         canvas.onmousemove = function( e ) {return false;};
     }
 
+    /**
+     * Return the radius from of the current mouse coordinates from the center of the canvas. The value
+     * is normalized to half the height of the canvas.
+     * */
+    function getDistanceFromCanvasCenter() {
+        var rect = canvas.getBoundingClientRect();
+        var x = canvas.width / 2.0;
+        var y = canvas.height / 2.0;
+        x = mouse.x - rect.left - x;
+        y = mouse.y - rect.top - y;
+        return 2.0 * Math.sqrt( x*x + y*y) / canvasHeight;
+    }
+
+    /**
+     * Returns a factor in [0,1], which goes to zero when the current mouse position is outside the tracking ball.
+     * */
+    function getTrackballDampeningFactor() {
+        var rad = getDistanceFromCanvasCenter();
+        return Math.exp( -3.0 * ( camera.getMaxSphereRadius() / trackball.getRadius() ) * rad );
+    }
+
     function onMouseMove( event ) {
-        var x = event.pageX;
-        var y = event.pageY;
-        mouse.dx = x - mouse.prevX;
-        mouse.dy = y - mouse.prevY;
-        mouse.prevX = x;
-        mouse.prevY = y;
+        mouse.x = event.pageX;
+        mouse.y = event.pageY;
+        mouse.dx = mouse.x - mouse.prevX;
+        mouse.dy = mouse.y - mouse.prevY;
+        mouse.prevX = mouse.x;
+        mouse.prevY = mouse.y;
     }
 
     /**
@@ -365,6 +418,7 @@ var morphoviewer = ( function( tools ) {
                 var tris = [];
                 var vertex_indices = model["face"]["vertex_indices"];
                 length = vertex_indices.length;
+                //noinspection JSDuplicatedDeclaration
                 for ( var i = 0; i < length; i++ ){
                     tris.push( vertex_indices[i] );
                 }

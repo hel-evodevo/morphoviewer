@@ -61,11 +61,13 @@ var morphoviewer = ( function( module ) {
         this.vboxy = null;
         this.vboxz = null;
         this.vboyz = null;
+        this.radius = 1.0;
 
         this.setRadius( 1.4 );
     };
 
     module.Trackball.prototype.setRadius = function( radius ) {
+        this.radius = radius;
         var xy = circlePoints( numPoints, radius, "xy" );
         var xz = circlePoints( numPoints, radius, "xz" );
         var yz = circlePoints( numPoints, radius, "yz" );
@@ -135,6 +137,10 @@ var morphoviewer = ( function( module ) {
         module.lineShader.setAttributes( this.gl, shader );
         this.gl.drawArrays( this.gl.LINES, 0, this.numPoints );
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, null );
+    };
+
+    module.Trackball.prototype.getRadius = function() {
+        return this.radius;
     };
 
     return module;

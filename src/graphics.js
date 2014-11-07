@@ -356,9 +356,7 @@ var morphoviewer = ( function( module ) {
     };
 
     module.Camera.prototype.matrix = function() {
-        var m = mat4.create();
-        mat4.multiply( m, this.perspective(), this.view() );
-        return m;
+        return mat4.multiply( mat4.create(), this.perspective(), this.view() );
     };
 
     module.Camera.prototype.viewAsOrtho = function() {
@@ -475,6 +473,17 @@ var morphoviewer = ( function( module ) {
         return val;
     }
 
+    /**
+     * Rotate the camera about its local forward axis.
+     * */
+    module.Camera.prototype.rotate = function( delta ) {
+        //TODO: what happend here, and why does the object disappera?
+        //console.log( delta );
+        this.rotation += delta;
+        mat4.rotate( this.viewTransform, this.viewTransform, delta, this.forward() );
+        this.rotationMatrix = mat3FromAxisAngle( this.rotation, this.forward() );
+    };
+
     /*Parameters are intended to be
      * a {Number}
      * b {Number}
@@ -560,7 +569,10 @@ var morphoviewer = ( function( module ) {
     module.Camera.prototype.right = function() {
         var x = this.radius * Math.sin( this.polar ) * Math.cos( this.azimuth );
         var z = - this.radius * Math.sin( this.polar ) * Math.sin( this.azimuth );
-        return vec3.normalize( vec3.create(), vec3.fromValues( x, 0.0, z ) );
+        return vec3.transformMat3( vec3.create(),
+            vec3.normalize( vec3.create(), vec3.fromValues( x, 0.0, z ) ),
+            this.rotationMatrix
+        );
     };
 
     module.Camera.prototype.up = function() {
@@ -568,37 +580,37 @@ var morphoviewer = ( function( module ) {
     };
 
     module.Camera.prototype.positionLeft = function() {
-        this.targetCenter = vec3.fromValues( 0.0, 0.0, 0.0 );
+        this.rotation = 0.0;
         this.polar = Math.PI / 2.0;
         this.azimuth = Math.PI / 2.0;
     };
 
     module.Camera.prototype.positionRight = function() {
-        this.targetCenter = vec3.fromValues( 0.0, 0.0, 0.0 );
+        this.rotation = 0.0;
         this.polar = Math.PI / 2.0;
         this.azimuth = 3.0 * Math.PI / 2.0;
     };
 
     module.Camera.prototype.positionTop = function() {
-        this.targetCenter = vec3.fromValues( 0.0, 0.0, 0.0 );
+        this.rotation = 0.0;
         this.polar = 0.001;
         this.azimuth = 0.0;
     };
 
     module.Camera.prototype.positionBottom = function() {
-        this.targetCenter = vec3.fromValues( 0.0, 0.0, 0.0 );
+        this.rotation = 0.0;
         this.polar = Math.PI;
         this.azimuth = 0.0;
     };
 
     module.Camera.prototype.positionFront = function() {
-        this.targetCenter = vec3.fromValues( 0.0, 0.0, 0.0 );
+        this.rotation = 0.0;
         this.polar = Math.PI / 2.0;
         this.azimuth = 0.0;
     };
 
     module.Camera.prototype.positionBack = function() {
-        this.targetCenter = vec3.fromValues( 0.0, 0.0, 0.0 );
+        this.rotation = 0.0;
         this.polar = Math.PI / 2.0;
         this.azimuth = Math.PI;
     };
@@ -608,6 +620,18 @@ var morphoviewer = ( function( module ) {
      * */
     module.Camera.prototype.distanceFromOrigin = function() {
         return this.radius;
+    };
+
+    /**
+     * Returns the radius of the largest possible sphere that, when placed at the origin,
+     * will be entirely visible, given this vertical field of view.
+     * */
+    module.Camera.prototype.getMaxSphereRadius = function() {
+        if ( this.viewPerspective ) {
+            return this.radius * Math.tan(0.5 * this.verticalFOV);
+        } else {
+            return lerp( this.nearPlane, this.farPlane, 0.01 * this.zoomFactor );
+        }
     };
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
