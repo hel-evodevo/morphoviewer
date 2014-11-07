@@ -231,6 +231,10 @@ var morphoviewer = ( function( module ) {
         this.gl = gl;
         this.vbo = null;	//vertex buffer object must be {Object}
         this.numVertices = 0;
+        this.contains = {
+            vertex: false, barycentric: false, normal: false,
+            curvature: false, orientation: false
+        };
     };
 
     /**
@@ -288,6 +292,62 @@ var morphoviewer = ( function( module ) {
             this.gl.STATIC_DRAW
         );
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, null );
+    };
+
+    /**
+     * @param {Object} obj an object containing the following fields: { vertex: [],
+     * normal: [], curvature: [], orientation: [] }
+     * */
+    module.Mesh.prototype.build = function( obj ) {
+        var buf = [];
+        if ( obj.vertex !== undefined ) {
+            buf = obj.vertex.slice();
+            this.numVertices = buf.length / 3.0;
+            this.contains["vertex"] = true;
+            var barycentric = new Array( buf.length );// vertexArray.length );
+            for ( var i = 0; i < this.numVertices * 3; i += 9 ) {
+                barycentric[i] = 1.0;
+                barycentric[i+1] = 0.0;
+                barycentric[i+2] = 0.0;
+                barycentric[i+3] = 0.0;
+                barycentric[i+4] = 1.0;
+                barycentric[i+5] = 0.0;
+                barycentric[i+6] = 0.0;
+                barycentric[i+7] = 0.0;
+                barycentric[i+8] = 1.0;
+            }
+            buf = buf.concat( barycentric );
+            this.contains["barycentric"] = true;
+        }
+        if ( obj.normal !== undefined ) {
+            buf = buf.concat( obj.normal );
+            this.contains["normal"] = true;
+        }
+        if ( obj.curvature !== undefined ) {
+            buf = buf.concat( obj.curvature );
+            this.contains["curvature"] = true;
+        }
+        if ( obj.orientation !== undefined ) {
+            buf = buf.concat( obj.orientation );
+            this.contains["orientation"] = true;
+        }
+        this.vbo = this.gl.createBuffer();
+        this.gl.bindBuffer( this.gl.ARRAY_BUFFER, this.vbo );
+        this.gl.bufferData(
+            this.gl.ARRAY_BUFFER,
+            new Float32Array( buf ),
+            this.gl.STATIC_DRAW
+        );
+        this.gl.bindBuffer( this.gl.ARRAY_BUFFER, null );
+    };
+
+    /**
+     * Check if this mesh instance has "vertex", "normal", "barycentric", "curvature" or "orientation" data.
+     *
+     * @param {String} bufType
+     * @returns {Boolean} true if contained, false otherwise */
+    module.Mesh.prototype.has = function( bufType ) {
+        return this.contains[bufType];
     };
 
     /**
@@ -477,7 +537,7 @@ var morphoviewer = ( function( module ) {
      * Rotate the camera about its local forward axis.
      * */
     module.Camera.prototype.rotate = function( delta ) {
-        //TODO: what happend here, and why does the object disappera?
+        //TODO: what happend here, and why does the object disappear?
         //console.log( delta );
         this.rotation += delta;
         mat4.rotate( this.viewTransform, this.viewTransform, delta, this.forward() );
@@ -638,6 +698,11 @@ var morphoviewer = ( function( module ) {
     // Shader strings and attribute methods
     /////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * These shaders operate under the assumption that the mesh will have vertex, barycentric, and normal
+     * data. curvature and orientation are optional.
+     * */
+
     module.directional =  {
         materialShininess: 40.0,
         materialSurfaceColor: vec3.fromValues( 0.6, 0.6, 0.6 ),
@@ -794,14 +859,24 @@ var morphoviewer = ( function( module ) {
             gl.enableVertexAttribArray( program.attribute( "curvature" ) );
             gl.enableVertexAttribArray( program.attribute( "orientation" ) );
         },
-        setAttributes: function( gl, program, numVertices ) {
+        setAttributes: function( gl, program, numVertices, mesh ) {
             gl.vertexAttribPointer( program.attribute( "vert" ),
                 3, gl.FLOAT, false, 0, 0 );
             //between color and vert there is norm and barycentric
-            gl.vertexAttribPointer( program.attribute( "curvature" ),
-                1, gl.FLOAT, false, 0, 36 * numVertices );
-            gl.vertexAttribPointer( program.attribute( "orientation"),
-                1, gl.FLOAT, false, 0, 40 * numVertices );
+            if ( mesh.has( "curvature" ) ) {
+                gl.vertexAttribPointer(program.attribute("curvature"),
+                    1, gl.FLOAT, false, 0, 36 * numVertices);
+            }
+            if ( mesh.has( "orientation" ) ) {
+                if ( mesh.has("curvature") ) {
+                    gl.vertexAttribPointer( program.attribute( "orientation"),
+                        1, gl.FLOAT, false, 0, 40 * numVertices );
+                }
+                else {
+                    gl.vertexAttribPointer( program.attribute( "orientation"),
+                        1, gl.FLOAT, false, 0, 36 * numVertices );
+                }
+            }
         },
         setUniforms: function( program ) {
             program.setUniform( "camera", this.camera, { type: "mat4" } );

@@ -121,12 +121,6 @@ var morphoviewer = ( function( tools ) {
         initShaders();
 
         trackball = new tools.Trackball( gl );
-
-        setInterval(function() {
-            console.log(
-                trackball.getRadius() / camera.getMaxSphereRadius()
-            );
-        }, 1000.0);
     };
 
     function initWebGL( canvas ) {
@@ -396,6 +390,12 @@ var morphoviewer = ( function( tools ) {
                 var orientation = tools.surfaceOrientation( norms_unwrapped );
 
                 mesh.meshFromArray( verts_unwrapped, norms_unwrapped, curvature, orientation );
+                mesh.build( {
+                    vertex: verts_unwrapped,
+                    normal: norms_unwrapped,
+                    curvature: curvature,
+                    orientation: orientation
+                } );
                 module.viewHemispherical();
                 var aabb = tools.getAabb( verts );
                 trackball.setRadius( aabb.length / 2.3 );
@@ -437,10 +437,10 @@ var morphoviewer = ( function( tools ) {
                 tools.centerPointCloud( verts );
                 var verts_unwrapped = tools.unwrapVectorArray( verts, tris );
                 var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
-                var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
-                var orientation = tools.surfaceOrientation( norms_unwrapped );
+                //var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
+                //var orientation = tools.surfaceOrientation( norms_unwrapped );
 
-                mesh.meshFromArray( verts_unwrapped, norms_unwrapped, curvature, orientation );
+                mesh.build( { vertex: verts_unwrapped, normal: norms_unwrapped } );
                 module.viewHemispherical();
                 var aabb = tools.getAabb( verts );
                 trackball.setRadius( aabb.length / 2.3 );
@@ -480,8 +480,14 @@ var morphoviewer = ( function( tools ) {
 
     /**
      * Color the surface of the object according to the discreet orientation of each polygon.
+     *
+     * If the currently active mesh doesn't have any orientation data, then this function doesn't do anything.
      * */
     module.viewSurfaceOrientation = function() {
+        //if the mesh doesn't have orientation data, then return immediately
+        if ( !mesh.has( "orientation" ) ) {
+            return;
+        }
         if ( currentProgram.object != colorProgram.object ) {
             currentProgram = colorProgram;
             currentProgram.use();
@@ -492,8 +498,13 @@ var morphoviewer = ( function( tools ) {
 
     /**
      * Color the surface of the object according to its local surface curvature.
+     *
+     * If the currently active mesh doesn't have curvature data, then this function doesn't do anything.
      * */
     module.viewSurfaceCurvature = function() {
+        if ( !mesh.has( "curvature" ) ) {
+            return;
+        }
         if ( currentProgram.object != colorProgram.object ) {
             currentProgram = colorProgram;
             currentProgram.use();
@@ -505,12 +516,12 @@ var morphoviewer = ( function( tools ) {
     function setupColorShader() {
         mesh.bind();
         tools.color.enableAttributes( gl, currentProgram );
-        tools.color.setAttributes( gl, currentProgram, mesh.vertices() );
+        tools.color.setAttributes( gl, currentProgram, mesh.vertices(), mesh );
         mesh.unbind();
 
         renderFunctor = function() {
             mesh.bind();
-            tools.color.setAttributes( gl, currentProgram, mesh.vertices() );
+            tools.color.setAttributes( gl, currentProgram, mesh.vertices(), mesh );
             tools.color.camera = camera.matrix();
             tools.color.model = modelView;
             tools.color.setUniforms( currentProgram );
