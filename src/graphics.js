@@ -246,59 +246,13 @@ var morphoviewer = ( function( module ) {
         return this.vbo;
     };
 
-    /**
-     * @class Build a mesh from an array of vertices and normals, and send to WebGL.
-     * @name Mesh
-     *
-     * @param {Array} vertexArray
-     * @param {Array} normalArray
-     * @param {Array} curvatureArray
-     * @param {Array} orientationArray
-     */
-    module.Mesh.prototype.meshFromArray = function( vertexArray, normalArray,
-                                                    curvatureArray, orientationArray ) {
-        this.vbo = this.gl.createBuffer();
-
-        this.numVertices = vertexArray.length / 3.0;
-
-        var barycentric = new Array( vertexArray.length );// vertexArray.length );
-        for ( var i = 0; i < this.numVertices * 3; i += 9 ) {
-            barycentric[i] = 1.0;
-            barycentric[i+1] = 0.0;
-            barycentric[i+2] = 0.0;
-            barycentric[i+3] = 0.0;
-            barycentric[i+4] = 1.0;
-            barycentric[i+5] = 0.0;
-            barycentric[i+6] = 0.0;
-            barycentric[i+7] = 0.0;
-            barycentric[i+8] = 1.0;
-        }
-        vertexArray = vertexArray.concat( barycentric);
-        vertexArray = vertexArray.concat( normalArray );
-        vertexArray = vertexArray.concat( curvatureArray );
-        vertexArray = vertexArray.concat( orientationArray );
-        /*if ( colorArray != undefined ) {
-         vertexArray = vertexArray.concat( colorArray );
-         }*/
-
-        this.gl.bindBuffer( this.gl.ARRAY_BUFFER, this.vbo );
-        //vertex data is stuck in here first
-        //after the vertex data will come the normal vector data
-        //will have to use vertexAttribPointer to set the correct offset for this vector
-        //I want to have only on vertex buffer object
-        this.gl.bufferData(
-            this.gl.ARRAY_BUFFER,
-            new Float32Array( vertexArray ),
-            this.gl.STATIC_DRAW
-        );
-        this.gl.bindBuffer( this.gl.ARRAY_BUFFER, null );
-    };
 
     /**
      * @param {Object} obj an object containing the following fields: { vertex: [],
      * normal: [], curvature: [], orientation: [] }
      * */
     module.Mesh.prototype.build = function( obj ) {
+        //TODO: throw error if vertices and normals are not included!
         var buf = [];
         if ( obj.vertex !== undefined ) {
             buf = obj.vertex.slice();

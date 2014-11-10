@@ -368,7 +368,10 @@ var morphoviewer = ( function( tools ) {
                 var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
                 var orientation = tools.surfaceOrientation( norms_unwrapped );
 
-                mesh.meshFromArray( verts_unwrapped, norms_unwrapped, curvature, orientation );
+                mesh.build({
+                    vertex: verts_unwrapped,
+                    normal: norms_unwrapped
+                });
                 module.viewHemispherical();
                 var aabb = tools.getAabb( verts );
                 trackball.setRadius( aabb.length / 2.3 );
@@ -389,7 +392,6 @@ var morphoviewer = ( function( tools ) {
                 var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
                 var orientation = tools.surfaceOrientation( norms_unwrapped );
 
-                mesh.meshFromArray( verts_unwrapped, norms_unwrapped, curvature, orientation );
                 mesh.build( {
                     vertex: verts_unwrapped,
                     normal: norms_unwrapped,
@@ -437,8 +439,6 @@ var morphoviewer = ( function( tools ) {
                 tools.centerPointCloud( verts );
                 var verts_unwrapped = tools.unwrapVectorArray( verts, tris );
                 var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
-                //var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
-                //var orientation = tools.surfaceOrientation( norms_unwrapped );
 
                 mesh.build( { vertex: verts_unwrapped, normal: norms_unwrapped } );
                 module.viewHemispherical();
