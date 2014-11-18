@@ -421,7 +421,7 @@ var morphoviewer = ( function( tools ) {
                 var vertex_indices = model["face"]["vertex_indices"];
                 length = vertex_indices.length;
                 //noinspection JSDuplicatedDeclaration
-                for ( var i = 0; i < length; i++ ){
+                for ( var i = 0; i < length; i++ ) {
                     tris.push( vertex_indices[i] );
                 }
 
@@ -436,11 +436,38 @@ var morphoviewer = ( function( tools ) {
                 } else {
                     norms = tools.vertexNormals( verts, tris );
                 }
+
+                var orientation = [];
+                if ( vertex["orientation"] !== undefined ) {
+                    var o = vertex["orientation"];
+                    for ( var i = 0; i < length; i++ ) {
+                        orientation.push( o[i] );
+                    }
+                }
+
+                var curvature = [];
+                if ( model["face"]["curvature"] !== undefined ) {
+                    var c = model["face"]["curvature"];
+                    for ( var i = 0; i < c.length; i++ ) {
+                        curvature.push( c[i], c[i], c[i] );
+                    }
+                }
                 tools.centerPointCloud( verts );
                 var verts_unwrapped = tools.unwrapVectorArray( verts, tris );
                 var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
 
-                mesh.build( { vertex: verts_unwrapped, normal: norms_unwrapped } );
+                var meshObj = {
+                    vertex: verts_unwrapped,
+                    normal: norms_unwrapped
+                };
+                //if curvature & orientation were supplied, then add them to the object
+                if ( vertex["orientation"] !== undefined ) {
+                    meshObj.orientation = tools.unwrapArray( orientation, tris );
+                }
+                if ( model["face"]["curvature"] !== undefined ) {
+                    meshObj.curvature = curvature;
+                }
+                mesh.build( meshObj );
                 module.viewHemispherical();
                 var aabb = tools.getAabb( verts );
                 trackball.setRadius( aabb.length / 2.3 );
