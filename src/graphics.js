@@ -987,6 +987,7 @@ var morphoviewer = ( function( module ) {
             gl.vertexAttribPointer( program.attribute( "vert" ),
                 3, gl.FLOAT, false, 0, 0 );
             //before normal, there is barycentric
+            //TODO js complains about the following line...
             gl.vertexAttribPointer( program.attribute( "norm" ),
                 3, gl.FLOAT, false, 0, 12 * 2 * numVertices );
         },

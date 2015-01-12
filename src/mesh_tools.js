@@ -22,6 +22,9 @@ SOFTWARE.*/
  * This file adds mesh processing tools to the morphoviewer namespace. The tools include functions
  * for calculating vertex normals, triangulation, and calculating various surface properties.
  * */
+
+// TODO add orientable surface orientation calculation
+// TODO add orientation patch count algorithm
 var morphoviewer = ( function( module ) {
 
     function centerOfVolume( points ) {

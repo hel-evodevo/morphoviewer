@@ -25,12 +25,14 @@ SOFTWARE.*/
 
 var morphoviewer = ( function( tools ) {
 
-    //public interface goes here
+    //the library's public interface goes here
     var module = {};
 
+    //the webGL context
     var gl;
-
+    //the target frame rate
     var fps = 40.0;
+    //camera object, class defined in graphics.js
     var camera;
     //this is the model view matrix of the mesh.
     //the tracking ball stays centered at (0, 0, 0) at all times and thus
@@ -39,6 +41,7 @@ var morphoviewer = ( function( tools ) {
     var mesh;
 
     //position parameters of mesh
+    //target position is for smooth motion interpolation
     var position = vec3.fromValues( 0.0, 0.0, 0.0 );
     var targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
 
@@ -52,11 +55,23 @@ var morphoviewer = ( function( tools ) {
     var illuminationProgram;//the illumination shader program
     var colorProgram;		//the surface curvature shader program
     var lineProgram;        //the shader for drawing lines
-    var hemisphereProgram;
-    var currentProgram;
+    var hemisphereProgram;  //the hemishperical lighting shader program
+    var currentProgram;     //the shader program that the renderer currently uses
 
+    /**
+     * Variables for keeping track of the rendering time delta
+     * */
     var timer;
+    var endTime;
 
+    /**
+     * Cache the mesh data for modification and creating new mesh objects during runtime*/
+    var meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
+
+    /*
+    * This is for storing the mouse's current and previous coordinates. Used in tracking mouse
+    * motion deltas.
+    * */
     var mouse = {
         x: 0, y:0,
         prevX: 0, prevY: 0,
@@ -299,12 +314,12 @@ var morphoviewer = ( function( tools ) {
     function drawScene() {
         gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
-        var endTime = new Date();
+        endTime = new Date();
         var deltaTime = endTime - timer;
         deltaTime /= 1000.0;
 
         //update mesh position
-        position = lerp( position, targetPosition, 0.5 * (1.0 - 1.0 / fps) );
+        position = lerp( position, targetPosition, 0.5 * (1.0 - 1.0 / deltaTime) );
         modelView = mat4.create();
         mat4.translate( modelView, modelView, position );
 
@@ -368,6 +383,11 @@ var morphoviewer = ( function( tools ) {
                 var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
                 var orientation = tools.surfaceOrientation( norms_unwrapped );
 
+                meshCache.vertex = verts_unwrapped;
+                meshCache.normal = norms_unwrapped;
+                meshCache.curvature = curvature;
+                meshCache.orientation = orientation;
+
                 mesh.build({
                     vertex: verts_unwrapped,
                     normal: norms_unwrapped
@@ -391,6 +411,11 @@ var morphoviewer = ( function( tools ) {
                 var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
                 var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
                 var orientation = tools.surfaceOrientation( norms_unwrapped );
+
+                meshCache.vertex = verts_unwrapped;
+                meshCache.normal = norms_unwrapped;
+                meshCache.orientation = orientation;
+                meshCache.curvature = curvature;
 
                 mesh.build( {
                     vertex: verts_unwrapped,
@@ -455,6 +480,8 @@ var morphoviewer = ( function( tools ) {
                 tools.centerPointCloud( verts );
                 var verts_unwrapped = tools.unwrapVectorArray( verts, tris );
                 var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
+                meshCache.vertex = verts_unwrapped;
+                meshCache.normal = norms_unwrapped;
 
                 var meshObj = {
                     vertex: verts_unwrapped,
@@ -463,9 +490,11 @@ var morphoviewer = ( function( tools ) {
                 //if curvature & orientation were supplied, then add them to the object
                 if ( vertex["orientation"] !== undefined ) {
                     meshObj.orientation = tools.unwrapArray( orientation, tris );
+                    meshCache.orientation = meshObj.orientation;
                 }
                 if ( model["face"]["curvature"] !== undefined ) {
                     meshObj.curvature = curvature;
+                    meshCache.curvature = curvature;
                 }
                 mesh.build( meshObj );
                 module.viewHemispherical();
@@ -693,6 +722,10 @@ var morphoviewer = ( function( tools ) {
     module.setLightAzimuthalAngle = function( phi ) {
         tools.hemisphere.azimuth = phi;
     };
+
+    module.calculateOrientation = function() {
+        //
+    }
 
     //re-export the io namespace
     module.io = {};
