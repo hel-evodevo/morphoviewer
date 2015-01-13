@@ -491,7 +491,6 @@ var morphoviewer = ( function( module ) {
      * Rotate the camera about its local forward axis.
      * */
     module.Camera.prototype.rotate = function( delta ) {
-        //TODO: what happend here, and why does the object disappear?
         //console.log( delta );
         this.rotation += delta;
         mat4.rotate( this.viewTransform, this.viewTransform, delta, this.forward() );
@@ -987,7 +986,6 @@ var morphoviewer = ( function( module ) {
             gl.vertexAttribPointer( program.attribute( "vert" ),
                 3, gl.FLOAT, false, 0, 0 );
             //before normal, there is barycentric
-            //TODO js complains about the following line...
             gl.vertexAttribPointer( program.attribute( "norm" ),
                 3, gl.FLOAT, false, 0, 12 * 2 * numVertices );
         },

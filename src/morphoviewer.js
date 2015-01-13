@@ -133,9 +133,16 @@ var morphoviewer = ( function( tools ) {
         var aspectRatio = canvas.clientWidth / canvas.clientHeight;
         camera = new tools.Camera( Math.PI * 60.0 / 180.0, aspectRatio, 0.01, 1000.0 );
 
+        //build an empty mesh so that we have a valid array buffer when the shaders initialize
+        mesh = new tools.Mesh( gl );
+        mesh.build( {vertex:[], normal:[], curvature:[], orientation:[]} );
+
+        //build the trackball before shaders are initialized
+        trackball = new tools.Trackball( gl );
+
         initShaders();
 
-        trackball = new tools.Trackball( gl );
+        module.viewHemispherical();
     };
 
     function initWebGL( canvas ) {
@@ -367,7 +374,6 @@ var morphoviewer = ( function( tools ) {
      */
     module.viewData = function( file, type ) {
         if ( type == "obj" ) {
-            mesh = new tools.Mesh( gl );
             tools.io.loadOBJ( file, function( model ) {
                 var verts = model["v"];
                 var tris = model["f"];
@@ -382,25 +388,24 @@ var morphoviewer = ( function( tools ) {
                 var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
                 var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
                 var orientation = tools.surfaceOrientation( norms_unwrapped );
-
+                meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
                 meshCache.vertex = verts_unwrapped;
                 meshCache.normal = norms_unwrapped;
                 meshCache.curvature = curvature;
                 meshCache.orientation = orientation;
 
+                mesh = new tools.Mesh( gl );
                 mesh.build({
                     vertex: verts_unwrapped,
                     normal: norms_unwrapped
                 });
-                module.viewHemispherical();
+                //module.viewHemispherical();
                 var aabb = tools.getAabb( verts );
                 trackball.setRadius( aabb.length / 2.3 );
                 camera.setBestPositionForModel( aabb );
             } );
 
         } else if ( type == "point cloud" ) {
-            mesh = new tools.Mesh( gl );
-
             tools.io.loadCSV( file, function( model ) {
                 var verts = model["points"];
                 tools.centerPointCloud( verts );
@@ -411,26 +416,25 @@ var morphoviewer = ( function( tools ) {
                 var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
                 var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
                 var orientation = tools.surfaceOrientation( norms_unwrapped );
-
+                meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
                 meshCache.vertex = verts_unwrapped;
                 meshCache.normal = norms_unwrapped;
                 meshCache.orientation = orientation;
                 meshCache.curvature = curvature;
-
+                mesh = new tools.Mesh( gl );
                 mesh.build( {
                     vertex: verts_unwrapped,
                     normal: norms_unwrapped,
                     curvature: curvature,
                     orientation: orientation
                 } );
-                module.viewHemispherical();
+                //module.viewHemispherical();
                 var aabb = tools.getAabb( verts );
                 trackball.setRadius( aabb.length / 2.3 );
                 camera.setBestPositionForModel( aabb );
             }, ',' );
 
         }  else if ( type == "ply" ) {
-            mesh = new tools.Mesh( gl );
             tools.io.loadPLY( file, function( model ) {
                 var verts = [];
                 var vertex = model["vertex"];
@@ -480,6 +484,7 @@ var morphoviewer = ( function( tools ) {
                 tools.centerPointCloud( verts );
                 var verts_unwrapped = tools.unwrapVectorArray( verts, tris );
                 var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
+                meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
                 meshCache.vertex = verts_unwrapped;
                 meshCache.normal = norms_unwrapped;
 
@@ -496,8 +501,9 @@ var morphoviewer = ( function( tools ) {
                     meshObj.curvature = curvature;
                     meshCache.curvature = curvature;
                 }
+                mesh = new tools.Mesh(gl);
                 mesh.build( meshObj );
-                module.viewHemispherical();
+                //module.viewHemispherical();
                 var aabb = tools.getAabb( verts );
                 trackball.setRadius( aabb.length / 2.3 );
                 camera.setBestPositionForModel( aabb );
@@ -585,6 +591,7 @@ var morphoviewer = ( function( tools ) {
             mesh.unbind();
         }
     }
+
     /**
      * Set the directional light shader as the active shader.
      * */
@@ -725,7 +732,7 @@ var morphoviewer = ( function( tools ) {
 
     module.calculateOrientation = function() {
         //
-    }
+    };
 
     //re-export the io namespace
     module.io = {};
