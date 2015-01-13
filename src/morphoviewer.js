@@ -319,7 +319,7 @@ var morphoviewer = ( function( tools ) {
         deltaTime /= 1000.0;
 
         //update mesh position
-        position = lerp( position, targetPosition, 0.5 * (1.0 - 1.0 / deltaTime) );
+        position = lerp( position, targetPosition, 0.5 * (1.0 - deltaTime) );
         modelView = mat4.create();
         mat4.translate( modelView, modelView, position );
 
