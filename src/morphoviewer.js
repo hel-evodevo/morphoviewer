@@ -64,9 +64,12 @@ var morphoviewer = ( function( tools ) {
     var timer;
     var endTime;
 
-    /**
-     * Cache the mesh data for modification and creating new mesh objects during runtime*/
-    var meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
+    /*
+     * Cache the mesh data for modification and creating new mesh objects during runtime
+     * This object has the same structure as the object that tools.Mesh.build( obj ) takes
+     * as an argument.
+     * */
+    var meshCache = { vertex: [], normal: [], curvature: [], orientation: [] };
 
     /*
     * This is for storing the mouse's current and previous coordinates. Used in tracking mouse
@@ -731,7 +734,9 @@ var morphoviewer = ( function( tools ) {
     };
 
     module.calculateOrientation = function() {
-        //
+        meshCache.orientation = tools.surfaceOrientationAboutCamera( meshCache.normal, camera.rotation() );
+        mesh = new tools.Mesh(gl);
+        mesh.build( meshCache );
     };
 
     //re-export the io namespace

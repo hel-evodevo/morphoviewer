@@ -351,8 +351,8 @@ var morphoviewer = ( function( module ) {
 
         this.polar = Math.PI / 2.0;
         this.azimuth = 0.0;
-        this.rotation = 0.0;    //the rotation angle about the local forward vector
-        this.rotationMatrix = mat3.create();
+        //this.rotation = 0.0;    //the rotation angle about the local forward vector
+        //this.rotationMatrix = mat3.create();
 
         this.viewTransform = mat4.create();
 
@@ -418,6 +418,14 @@ var morphoviewer = ( function( module ) {
      */
     module.Camera.prototype.view = function() {
         return this.viewTransform;
+    };
+
+    module.Camera.prototype.rotation = function() {
+        return mat3.multiply(
+            mat3.create(),
+            mat3FromAxisAngle( [0,0,1], this.azimuth ),
+            mat3FromAxisAngle( [1,0,0], 0.5*Math.PI - this.polar )
+        );
     };
 
     module.Camera.prototype.getPosition = function() {
@@ -491,10 +499,9 @@ var morphoviewer = ( function( module ) {
      * Rotate the camera about its local forward axis.
      * */
     module.Camera.prototype.rotate = function( delta ) {
-        //console.log( delta );
-        this.rotation += delta;
+        //this.rotation += delta;
         mat4.rotate( this.viewTransform, this.viewTransform, delta, this.forward() );
-        this.rotationMatrix = mat3FromAxisAngle( this.rotation, this.forward() );
+        //this.rotationMatrix = mat3FromAxisAngle( this.rotation, this.forward() );
     };
 
     /*Parameters are intended to be
@@ -508,7 +515,6 @@ var morphoviewer = ( function( module ) {
 
     /*Returns {mat3} rotation matrix corresponding to the rotation
      * theta about the axis u.*/
-    //CONTRIBUTE THIS TO GLMATRIX!
     function mat3FromAxisAngle( u, theta ) {
         var r = mat3.create();
         r[0] = Math.cos(theta) + u[0]*u[0] * (1.0 - Math.cos(theta) );
@@ -548,9 +554,6 @@ var morphoviewer = ( function( module ) {
         );
         vec3.lerp( this.position, this.position, this.targetPosition, dt * 20 );
 
-        /*var right = vec3.cross( vec3.create(), offset, vec3.fromValues( 0.0, 1.0, 0.0));
-        vec3.normalize( right, right );
-        var up = vec3.cross( vec3.create(), right, offset );	//get the new up vector*/
         mat4.lookAt(
             this.viewTransform,
             this.position,
@@ -582,10 +585,7 @@ var morphoviewer = ( function( module ) {
     module.Camera.prototype.right = function() {
         var x = this.radius * Math.sin( this.polar ) * Math.cos( this.azimuth );
         var z = - this.radius * Math.sin( this.polar ) * Math.sin( this.azimuth );
-        return vec3.transformMat3( vec3.create(),
-            vec3.normalize( vec3.create(), vec3.fromValues( x, 0.0, z ) ),
-            this.rotationMatrix
-        );
+        return vec3.normalize( vec3.create(), vec3.fromValues( x, 0.0, z ) );
     };
 
     module.Camera.prototype.up = function() {
@@ -593,37 +593,37 @@ var morphoviewer = ( function( module ) {
     };
 
     module.Camera.prototype.positionLeft = function() {
-        this.rotation = 0.0;
+        //this.rotation = 0.0;
         this.polar = Math.PI / 2.0;
         this.azimuth = Math.PI / 2.0;
     };
 
     module.Camera.prototype.positionRight = function() {
-        this.rotation = 0.0;
+        //this.rotation = 0.0;
         this.polar = Math.PI / 2.0;
         this.azimuth = 3.0 * Math.PI / 2.0;
     };
 
     module.Camera.prototype.positionTop = function() {
-        this.rotation = 0.0;
+        //this.rotation = 0.0;
         this.polar = 0.001;
         this.azimuth = 0.0;
     };
 
     module.Camera.prototype.positionBottom = function() {
-        this.rotation = 0.0;
+        //this.rotation = 0.0;
         this.polar = Math.PI;
         this.azimuth = 0.0;
     };
 
     module.Camera.prototype.positionFront = function() {
-        this.rotation = 0.0;
+        //this.rotation = 0.0;
         this.polar = Math.PI / 2.0;
         this.azimuth = 0.0;
     };
 
     module.Camera.prototype.positionBack = function() {
-        this.rotation = 0.0;
+        //this.rotation = 0.0;
         this.polar = Math.PI / 2.0;
         this.azimuth = Math.PI;
     };

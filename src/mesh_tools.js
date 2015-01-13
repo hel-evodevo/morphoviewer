@@ -62,15 +62,11 @@ var morphoviewer = ( function( module ) {
     /**
      * Get the unwrapped (containing repeated vertices) array
      *
-     * @returns {Array} the unwrapped array of vertex coordinates.
+     * @returns {Array} an array of floating point values, each group of three represents one point
      */
     module.unwrapVectorArray = function( v, inds ) {
         var verts = [];
         for ( var i = 0; i < inds.length; i++ ) {
-            /*if ( inds[i][0] >= v.length || inds[i][1] >= v.length || inds[i][2] >= v.length ) {
-                console.log( inds[i][0] + " " + inds[i][1] + " " + inds[i][2] + ", length: " + v.length );
-                throw "MESH FAILURE";
-            }*/
             verts.push( v[inds[i][0]][0], v[inds[i][0]][1], v[inds[i][0]][2] );	//first vertex
             verts.push( v[inds[i][1]][0], v[inds[i][1]][1], v[inds[i][1]][2] );	//second vertex
             verts.push( v[inds[i][2]][0], v[inds[i][2]][1], v[inds[i][2]][2] );	//third vertex
@@ -347,6 +343,31 @@ var morphoviewer = ( function( module ) {
             var region = Math.floor( theta / ( 2.0 * Math.PI / n) );	//find the region number in [1, n]
 
             region /= n-1;	//normalize!
+            regions.push( region );
+        }
+        return regions;
+    };
+
+
+    /**
+     * Returns the surface orientation values about the forward transform of the camera
+     *
+     * norms - a vector of unwrapped vertex normals
+     * mat - the camera rotation matrix
+     * */
+    module.surfaceOrientationAboutCamera = function( norms, mat ) {
+        console.log(mat);
+        var regions = [];
+        var n = 8;  //the number of orientations we are going to consider
+        for ( var i = 0; i < norms.length; i+= 3 ) {
+            //horrid manual matrix math, to avoid object allocation
+            var v1 = mat[0]*norms[i] + mat[1]*norms[i+1] + mat[2]*norms[i+2];
+            var v2 = mat[3]*norms[i] + mat[4]*norms[i+1] + mat[3]*norms[i+2];
+            var or = vec2.normalize( vec2.create(), vec2.fromValues(v1, v2) );
+            var theta = angleRangeClamp( Math.atan2( or[1], or[0] ) );
+            var region = Math.floor( theta / ( 2.0 * Math.PI / n) );
+
+            region /= n-1;
             regions.push( region );
         }
         return regions;
