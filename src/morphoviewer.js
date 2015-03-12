@@ -597,6 +597,7 @@ var morphoviewer = ( function( tools ) {
 
     /**
      * Set the directional light shader as the active shader.
+     * TODO: get rid of this lighting mode
      * */
     module.viewIlluminated = function() {
         currentProgram = illuminationProgram;
