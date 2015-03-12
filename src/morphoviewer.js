@@ -28,95 +28,256 @@ var morphoviewer = ( function( tools ) {
     //the library's public interface goes here
     var module = {};
 
-    //the webGL context
-    var gl;
-    //the target frame rate
-    var fps = 40.0;
-    //camera object, class defined in graphics.js
-    var camera;
-    //this is the model view matrix of the mesh.
-    //the tracking ball stays centered at (0, 0, 0) at all times and thus
-    //doesn't have it's own matrix
-    var modelView = mat4.create();	//identity matrix, models centered at (0, 0, 0)
-    var mesh;
+    module.Viewer = function( id ) {
 
-    //position parameters of mesh
-    //target position is for smooth motion interpolation
-    var position = vec3.fromValues( 0.0, 0.0, 0.0 );
-    var targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
+        var self = this;
 
-    //tracking ball
-    var showTrackball = true;
-    var trackball;
+        this.fps = 40.0;
+        this.renderFunctor = function() {};
 
-    var renderFunctor = function() {};	//do nothing initially
+        //this is the model view matrix of the mesh.
+        //the tracking ball stays centered at (0, 0, 0) at all times and thus
+        //doesn't have it's own matrix
+        this.modelView = mat4.create();	//identity matrix, models centered at (0, 0, 0)
 
-    var wireframeProgram;	//the wireframe shader program
-    var illuminationProgram;//the illumination shader program
-    var colorProgram;		//the surface curvature shader program
-    var lineProgram;        //the shader for drawing lines
-    var hemisphereProgram;  //the hemishperical lighting shader program
-    var currentProgram;     //the shader program that the renderer currently uses
+        //position parameters of mesh
+        //target position is for smooth motion interpolation
+        this.position = vec3.fromValues( 0.0, 0.0, 0.0 );
+        this.targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
 
-    /**
-     * Variables for keeping track of the rendering time delta
-     * */
-    var timer;
-    var endTime;
+        //tracking ball
+        this.showTrackball = true;
 
-    /*
-     * Cache the mesh data for modification and creating new mesh objects during runtime
-     * This object has the same structure as the object that tools.Mesh.build( obj ) takes
-     * as an argument.
-     * */
-    var meshCache = { vertex: [], normal: [], curvature: [], orientation: [] };
+        this.wireframeProgram;	//the wireframe shader program
+        this.illuminationProgram;//the illumination shader program
+        this.colorProgram;		//the surface curvature shader program
+        this.lineProgram;        //the shader for drawing lines
+        this.hemisphereProgram;  //the hemishperical lighting shader program
+        this.currentProgram;     //the shader program that the renderer currently uses
 
-    /*
-    * This is for storing the mouse's current and previous coordinates. Used in tracking mouse
-    * motion deltas.
-    * */
-    var mouse = {
-        x: 0, y:0,
-        prevX: 0, prevY: 0,
-        dx: 0, dy: 0 };
+        /**
+         * Variables for keeping track of the rendering time delta
+         * */
+        this.timer;
+        this.endTime;
 
-    var leftMouseButtonDown = false;
+        /*
+         * Cache the mesh data for modification and creating new mesh objects during runtime
+         * This object has the same structure as the object that tools.Mesh.build( obj ) takes
+         * as an argument.
+         * */
+        this.meshCache = { vertex: [], normal: [], curvature: [], orientation: [] };
 
-    /**
-     * Initialize the morphoviewer.
-     *
-     * @param {String} canvasId the DOM id of the HTML5 canvas. If the parameter is not
-     * supplied, the "glcanvas" id will be searched for.
-     */
-    module.initialize = function( canvasId ) {
+        /*
+         * This is for storing the mouse's current and previous coordinates. Used in tracking mouse
+         * motion deltas.
+         * */
+        this.mouse = {
+            x: 0, y:0,
+            prevX: 0, prevY: 0,
+            dx: 0, dy: 0 };
 
+        this.leftMouseButtonDown = false;
+
+        var glRes = initgl( id );
+        this.gl = glRes[0];
+        this.canvas = glRes[1];
+
+        var onMouseMove = function( event ) {
+            self.mouse.x = event.pageX;
+            self.mouse.y = event.pageY;
+            self.mouse.dx = self.mouse.x - self.mouse.prevX;
+            self.mouse.dy = self.mouse.y - self.mouse.prevY;
+            self.mouse.prevX = self.mouse.x;
+            self.mouse.prevY = self.mouse.y;
+        };
+
+        //construct event listeners
+        var onMouseWheel = function( e ) {
+            var event = window.event || e;
+            //prevent from scrolling the document
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            //handle dolly zoom
+            var delta = event.detail ? event.detail * (-120) : event.wheelDelta;
+            self.camera.dolly( delta * -0.0025 );
+        };
+
+        var onMouseDown = function( event ) {
+            if ( !event.which && event.button ) {
+                if ( event.button & 1 ) {		//Left
+                    event.which = 1;
+                } else if ( event.button & 4 ) {//Middle
+                    event.which = 2;
+                } else if ( event.button & 2 ) {//Right
+                    event.which = 3;
+                }
+            }
+            /* Update mouse coordinates so that we don't create
+             * a huge delta in the opposite direction
+             */
+            self.mouse.prevX = event.pageX;
+            self.mouse.prevY = event.pageY;
+            switch ( event.which ) {
+                case 1:
+                    self.leftMouseButtonDown = true;
+                    self.canvas.onmousemove = function( e ) {
+                        onMouseMove( e );
+                        self.camera.orbit(
+                            self.mouse.dx * 0.004,// * getTrackballDampeningFactor(),
+                            self.mouse.dy * 0.004// * getTrackballDampeningFactor()
+                        );
+                    };
+                    break;
+                case 3:
+                    self.canvas.onmousemove = function( e ) {
+                        onMouseMove( e );
+                        var up = vec3.scale(vec3.create(), self.camera.up(), -self.mouse.dy * self.camera.distanceFromOrigin() * 0.001 ) ;
+                        var right = vec3.scale( vec3.create(), self.camera.right(), self.mouse.dx * self.camera.distanceFromOrigin() * 0.001 );
+                        //mat4.translate( modelView, modelView, up );
+                        //mat4.translate( modelView, modelView, right );
+                        //targetPosition += up;
+                        //targetPosition += right;
+                        vec3.add( self.targetPosition, self.targetPosition, up );
+                        vec3.add( self.targetPosition, self.targetPosition, right );
+                    };
+                    break;
+            }
+        };
+
+        var onMouseUp = function( event ) {
+            if ( !event.which && event.button ) {
+                if ( event.button & 1 ) {		//Left
+                    event.which = 1;
+                } else if ( event.button & 4 ) {//Middle
+                    event.which = 2;
+                } else if ( event.button & 2 ) {//Right
+                    event.which = 3;
+                }
+            }
+
+            switch ( event.which ) {
+                case 1:
+                    self.leftMouseButtonDown = false;
+                    break;
+                case 2:
+                    //
+                    break;
+                case 3:
+                    //
+                    break;
+            }
+            self.canvas.onmousemove = function( e ) {return false;};
+        };
+
+        this.canvas.onmousedown = onMouseDown;
+        this.canvas.onmouseup = onMouseUp;
+        this.canvas.oncontextmenu = function( e ) { e.preventDefault(); };
+        if ( this.canvas.addEventListener ) {
+            //IE9, Chrome, Safari, Opera
+            this.canvas.addEventListener( "mousewheel", onMouseWheel, false );
+            //Firefox
+            this.canvas.addEventListener( "DOMMouseScroll", onMouseWheel );
+        } else {
+            this.canvas.addEventListener( "onmousewheel", onMouseWheel );
+        }
+
+        //the morphoviewer has only one camera
+        var aspectRatio = this.canvas.clientWidth / this.canvas.clientHeight;
+        this.camera = new tools.Camera( Math.PI * 60.0 / 180.0, aspectRatio, 0.01, 1000.0 );
+
+        //build an empty mesh so that we have a valid array buffer when the shaders initialize
+        this.mesh = new tools.Mesh( this.gl );
+        this.mesh.build( {vertex:[], normal:[], curvature:[], orientation:[]} );
+
+        this.timer = new Date();
+
+        //build the trackball before shaders are initialized
+        this.trackball = new tools.Trackball( this.gl );
+
+        //construct render command
+
+        var drawScene = function() {
+            self.gl.clear( self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT );
+
+            self.endTime = new Date();
+            var deltaTime = self.endTime - self.timer;
+            deltaTime /= 1000.0;
+
+            //update mesh position
+            self.position = lerp( self.position, self.targetPosition, 0.5 * (1.0 - deltaTime) );
+            self.modelView = mat4.create();
+            mat4.translate( self.modelView, self.modelView, self.position );
+
+            self.camera.update( deltaTime );
+
+            self.renderFunctor();
+
+            if ( self.showTrackball ) {
+                self.currentProgram.stopUsing();
+
+                self.lineProgram.use();
+                tools.lineShader.camera = self.camera.matrix();
+                tools.lineShader.model = mat4.create();
+                tools.lineShader.surfaceColor = vec3.fromValues( 0.7, 0.7, 0.7 );
+                if ( self.leftMouseButtonDown ) {
+                    //blue
+                    tools.lineShader.surfaceColor = vec3.fromValues(0.38, 0.38, 1.0);
+                    tools.lineShader.setUniforms( self.lineProgram);
+                    self.trackball.drawXYCircle( self.lineProgram);
+                    //green
+                    tools.lineShader.surfaceColor = vec3.fromValues(0.38, 1.0, 0.38);
+                    tools.lineShader.setUniforms( self.lineProgram );
+                    self.trackball.drawXZCircle( self.lineProgram );
+                    //red
+                    tools.lineShader.surfaceColor = vec3.fromValues(1.0, 0.38, 0.38);
+                    tools.lineShader.setUniforms( self.lineProgram );
+                    self.trackball.drawYZCircle( self.lineProgram );
+                } else {
+                    tools.lineShader.setUniforms( self.lineProgram );
+                    self.trackball.draw( self.lineProgram );
+                }
+                self.lineProgram.stopUsing();
+
+                self.currentProgram.use();
+            }
+
+            self.timer = new Date();
+        };
+
+        setInterval(
+            drawScene,
+            1000.0 / this.fps,
+            this.gl,
+            this.renderFunctor,
+            this.lineProgram,
+            this.currentProgram,
+            this.trackball,
+            this.camera,
+            this.timer
+        );
+
+        var progRes = initShaders( this.gl );
+        this.wireframeProgram = progRes[0];
+        this.colorProgram = progRes[1];
+        this.illuminationProgram = progRes[2];
+        this.lineProgram = progRes[4];
+        this.hemisphereProgram = progRes[3];
+
+        this.viewHemispherical();
+    };
+
+    function initgl( canvasId ) {
+        var cid;
         if ( canvasId == undefined ) {
             cid = "glcanvas";
         } else {
             cid = canvasId;
         }
-        //declared globally for later use
-        canvas = document.getElementById( cid );
-        canvasWidth = canvas.width;
-        canvasHeight = canvas.height;
 
-        //Event handlers for input
-        canvas.onmousedown = onMouseDown;
-        canvas.onmouseup = onMouseUp;
-        canvas.oncontextmenu = function( e ) { e.preventDefault(); };
+        var canvas = document.getElementById( cid );
 
-        //add a mousewheel event listener to the canvas
-        if ( canvas.addEventListener ) {
-            //IE9, Chrome, Safari, Opera
-            canvas.addEventListener( "mousewheel", onMouseWheel, false );
-            //Firefox
-            canvas.addEventListener( "DOMMouseScroll", onMouseWheel );
-        } else {
-            //IE6/7/8
-            canvas.addEventListener( "onmousewheel", onMouseWheel );
-        }
-
-        gl = initWebGL( canvas );
+        var gl = initWebGL( canvas );
 
         //continue only if WebGL is available and working
         if ( gl ) {
@@ -124,29 +285,12 @@ var morphoviewer = ( function( tools ) {
             gl.enable( gl.DEPTH_TEST );
             gl.depthFunc( gl.LEQUAL );
             gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-
-            setInterval( drawScene, 1000.0 / fps );
         } else {
             alert( "morphoviewer.initialize: Unable to initialize WebGL. Your browser may not support it." );
         }
 
-        timer = new Date();
-
-        //the morphoviewer has only one camera
-        var aspectRatio = canvas.clientWidth / canvas.clientHeight;
-        camera = new tools.Camera( Math.PI * 60.0 / 180.0, aspectRatio, 0.01, 1000.0 );
-
-        //build an empty mesh so that we have a valid array buffer when the shaders initialize
-        mesh = new tools.Mesh( gl );
-        mesh.build( {vertex:[], normal:[], curvature:[], orientation:[]} );
-
-        //build the trackball before shaders are initialized
-        trackball = new tools.Trackball( gl );
-
-        initShaders();
-
-        module.viewHemispherical();
-    };
+        return [ gl, canvas ];
+    }
 
     function initWebGL( canvas ) {
         var context = null;
@@ -159,148 +303,25 @@ var morphoviewer = ( function( tools ) {
         return context;
     }
 
-    function initShaders() {
-        wireframeProgram = new tools.Program( gl );
+    function initShaders( gl ) {
+        var wireframeProgram = new tools.Program( gl );
         wireframeProgram.programFromString( tools.wireframe.vertex, tools.wireframe.fragment );
 
-        colorProgram = new tools.Program( gl );
+        var colorProgram = new tools.Program( gl );
         colorProgram.programFromString( tools.color.vertex, tools.color.fragment );
 
-        illuminationProgram = new tools.Program( gl );
+        var illuminationProgram = new tools.Program( gl );
         illuminationProgram.programFromString( tools.directional.vertex, tools.directional.fragment );
 
-        hemisphereProgram = new tools.Program( gl );
+        var hemisphereProgram = new tools.Program( gl );
         hemisphereProgram.programFromString( tools.hemisphere.vertex, tools.hemisphere.fragment );
 
-        lineProgram = new tools.Program( gl );
+        var lineProgram = new tools.Program( gl );
         lineProgram.programFromString( tools.lineShader.vertex, tools.lineShader.fragment );
         tools.lineShader.enableAttributes( gl, lineProgram );
         tools.lineShader.setAttributes( gl, lineProgram );
 
-        currentProgram = hemisphereProgram;
-    }
-
-    function onMouseWheel( e ) {
-        var event = window.event || e;
-        //prevent from scrolling the document
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        //handle dolly zoom
-        var delta = event.detail ? event.detail * (-120) : event.wheelDelta;
-        camera.dolly( delta * -0.0025 );
-    }
-
-    function onMouseDown( event ) {
-        if ( !event.which && event.button ) {
-            if ( event.button & 1 ) {		//Left
-                event.which = 1;
-            } else if ( event.button & 4 ) {//Middle
-                event.which = 2;
-            } else if ( event.button & 2 ) {//Right
-                event.which = 3;
-            }
-        }
-        /* Update mouse coordinates so that we don't create
-         * a huge delta in the opposite direction
-         */
-        mouse.prevX = event.pageX;
-        mouse.prevY = event.pageY;
-        switch ( event.which ) {
-            case 1:
-                leftMouseButtonDown = true;
-                canvas.onmousemove = function( e ) {
-                    onMouseMove( e );
-                    camera.orbit(
-                        mouse.dx * 0.004,// * getTrackballDampeningFactor(),
-                        mouse.dy * 0.004// * getTrackballDampeningFactor()
-                    );
-                    var rotation = 0.0;
-                    var rect = canvas.getBoundingClientRect();
-                    var x = mouse.x - rect.left - canvasWidth / 2.0;
-                    var y = mouse.y - rect.top - canvasHeight / 2.0;
-                    var factor = 0.004;
-                    if ( x < 0.0 ) {
-                        rotation += - factor * mouse.dy;
-                    } else {
-                        rotation += factor * mouse.dy;
-                    }
-                    if ( y < 0.0 ) {
-                        rotation += - factor * mouse.dx;
-                    } else {
-                        rotation += factor * mouse.dx;
-                    }
-                    //camera.rotate( ( 1.0 - getTrackballDampeningFactor() ) * rotation );
-                };
-                break;
-            case 3:
-                canvas.onmousemove = function( e ) {
-                    onMouseMove( e );
-                    var up = vec3.scale(vec3.create(), camera.up(), -mouse.dy * camera.distanceFromOrigin() * 0.001 ) ;
-                    var right = vec3.scale( vec3.create(), camera.right(), mouse.dx * camera.distanceFromOrigin() * 0.001 );
-                    //mat4.translate( modelView, modelView, up );
-                    //mat4.translate( modelView, modelView, right );
-                    //targetPosition += up;
-                    //targetPosition += right;
-                    vec3.add( targetPosition, targetPosition, up );
-                    vec3.add( targetPosition, targetPosition, right );
-                };
-                break;
-        }
-    }
-
-    function onMouseUp( event ) {
-        if ( !event.which && event.button ) {
-            if ( event.button & 1 ) {		//Left
-                event.which = 1;
-            } else if ( event.button & 4 ) {//Middle
-                event.which = 2;
-            } else if ( event.button & 2 ) {//Right
-                event.which = 3;
-            }
-        }
-
-        switch ( event.which ) {
-            case 1:
-                leftMouseButtonDown = false;
-                break;
-            case 2:
-                //
-                break;
-            case 3:
-                //
-                break;
-        }
-        canvas.onmousemove = function( e ) {return false;};
-    }
-
-    /**
-     * Return the radius from of the current mouse coordinates from the center of the canvas. The value
-     * is normalized to half the height of the canvas.
-     * */
-    function getDistanceFromCanvasCenter() {
-        var rect = canvas.getBoundingClientRect();
-        var x = canvas.width / 2.0;
-        var y = canvas.height / 2.0;
-        x = mouse.x - rect.left - x;
-        y = mouse.y - rect.top - y;
-        return 2.0 * Math.sqrt( x*x + y*y) / canvasHeight;
-    }
-
-    /**
-     * Returns a factor in [0,1], which goes to zero when the current mouse position is outside the tracking ball.
-     * */
-    function getTrackballDampeningFactor() {
-        var rad = getDistanceFromCanvasCenter();
-        return Math.exp( -3.0 * ( camera.getMaxSphereRadius() / trackball.getRadius() ) * rad );
-    }
-
-    function onMouseMove( event ) {
-        mouse.x = event.pageX;
-        mouse.y = event.pageY;
-        mouse.dx = mouse.x - mouse.prevX;
-        mouse.dy = mouse.y - mouse.prevY;
-        mouse.prevX = mouse.x;
-        mouse.prevY = mouse.y;
+        return [ wireframeProgram, colorProgram, illuminationProgram, hemisphereProgram, lineProgram ];
     }
 
     /**
@@ -321,61 +342,14 @@ var morphoviewer = ( function( tools ) {
         );
     }
 
-    function drawScene() {
-        gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
-
-        endTime = new Date();
-        var deltaTime = endTime - timer;
-        deltaTime /= 1000.0;
-
-        //update mesh position
-        position = lerp( position, targetPosition, 0.5 * (1.0 - deltaTime) );
-        modelView = mat4.create();
-        mat4.translate( modelView, modelView, position );
-
-        camera.update( deltaTime );
-
-        renderFunctor();
-
-        if ( showTrackball ) {
-            currentProgram.stopUsing();
-
-            lineProgram.use();
-            tools.lineShader.camera = camera.matrix();
-            tools.lineShader.model = mat4.create();
-            tools.lineShader.surfaceColor = vec3.fromValues( 0.7, 0.7, 0.7 );
-            if ( leftMouseButtonDown ) {
-                //blue
-                tools.lineShader.surfaceColor = vec3.fromValues(0.38, 0.38, 1.0);
-                tools.lineShader.setUniforms(lineProgram);
-                trackball.drawXYCircle(lineProgram);
-                //green
-                tools.lineShader.surfaceColor = vec3.fromValues(0.38, 1.0, 0.38);
-                tools.lineShader.setUniforms(lineProgram);
-                trackball.drawXZCircle(lineProgram);
-                //red
-                tools.lineShader.surfaceColor = vec3.fromValues(1.0, 0.38, 0.38);
-                tools.lineShader.setUniforms(lineProgram);
-                trackball.drawYZCircle(lineProgram);
-            } else {
-                tools.lineShader.setUniforms( lineProgram );
-                trackball.draw( lineProgram );
-            }
-            lineProgram.stopUsing();
-
-            currentProgram.use();
-        }
-
-        timer = new Date();
-    }
-
     /**
      * View a 3d file. The file can be a csv point cloud, or a .OBJ mesh file.
      *
      * @param {String} file The file URL
      * @param {String} type Can be either "obj" for .OBJ mesh file, or "point cloud" for csv point cloud.
      */
-    module.viewData = function( file, type ) {
+    module.Viewer.prototype.viewData = function( file, type ) {
+        var self = this;
         if ( type == "obj" ) {
             tools.io.loadOBJ( file, function( model ) {
                 var verts = model["v"];
@@ -391,21 +365,20 @@ var morphoviewer = ( function( tools ) {
                 var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
                 var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
                 var orientation = tools.surfaceOrientation( norms_unwrapped );
-                meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
-                meshCache.vertex = verts_unwrapped;
-                meshCache.normal = norms_unwrapped;
-                meshCache.curvature = curvature;
-                meshCache.orientation = orientation;
+                self.meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
+                self.meshCache.vertex = verts_unwrapped;
+                self.meshCache.normal = norms_unwrapped;
+                self.meshCache.curvature = curvature;
+                self.meshCache.orientation = orientation;
 
-                mesh = new tools.Mesh( gl );
-                mesh.build({
+                self.mesh = new tools.Mesh( self.gl );
+                self.mesh.build({
                     vertex: verts_unwrapped,
                     normal: norms_unwrapped
                 });
-                //module.viewHemispherical();
                 var aabb = tools.getAabb( verts );
-                trackball.setRadius( aabb.length / 2.3 );
-                camera.setBestPositionForModel( aabb );
+                self.trackball.setRadius( aabb.length / 2.3 );
+                self.camera.setBestPositionForModel( aabb );
             } );
 
         } else if ( type == "point cloud" ) {
@@ -419,22 +392,21 @@ var morphoviewer = ( function( tools ) {
                 var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
                 var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
                 var orientation = tools.surfaceOrientation( norms_unwrapped );
-                meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
-                meshCache.vertex = verts_unwrapped;
-                meshCache.normal = norms_unwrapped;
-                meshCache.orientation = orientation;
-                meshCache.curvature = curvature;
-                mesh = new tools.Mesh( gl );
-                mesh.build( {
+                self.meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
+                self.meshCache.vertex = verts_unwrapped;
+                self.meshCache.normal = norms_unwrapped;
+                self.meshCache.orientation = orientation;
+                self.meshCache.curvature = curvature;
+                self.mesh = new tools.Mesh( self.gl );
+                self.mesh.build( {
                     vertex: verts_unwrapped,
                     normal: norms_unwrapped,
                     curvature: curvature,
                     orientation: orientation
                 } );
-                //module.viewHemispherical();
                 var aabb = tools.getAabb( verts );
-                trackball.setRadius( aabb.length / 2.3 );
-                camera.setBestPositionForModel( aabb );
+                self.trackball.setRadius( aabb.length / 2.3 );
+                self.camera.setBestPositionForModel( aabb );
             }, ',' );
 
         }  else if ( type == "ply" ) {
@@ -487,9 +459,9 @@ var morphoviewer = ( function( tools ) {
                 tools.centerPointCloud( verts );
                 var verts_unwrapped = tools.unwrapVectorArray( verts, tris );
                 var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
-                meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
-                meshCache.vertex = verts_unwrapped;
-                meshCache.normal = norms_unwrapped;
+                self.meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
+                self.meshCache.vertex = verts_unwrapped;
+                self.meshCache.normal = norms_unwrapped;
 
                 var meshObj = {
                     vertex: verts_unwrapped,
@@ -498,18 +470,17 @@ var morphoviewer = ( function( tools ) {
                 //if curvature & orientation were supplied, then add them to the object
                 if ( vertex["orientation"] !== undefined ) {
                     meshObj.orientation = tools.unwrapArray( orientation, tris );
-                    meshCache.orientation = meshObj.orientation;
+                    self.meshCache.orientation = meshObj.orientation;
                 }
                 if ( model["face"]["curvature"] !== undefined ) {
                     meshObj.curvature = curvature;
-                    meshCache.curvature = curvature;
+                    self.meshCache.curvature = curvature;
                 }
-                mesh = new tools.Mesh(gl);
-                mesh.build( meshObj );
-                //module.viewHemispherical();
+                self.mesh = new tools.Mesh( self.gl );
+                self.mesh.build( meshObj );
                 var aabb = tools.getAabb( verts );
-                trackball.setRadius( aabb.length / 2.3 );
-                camera.setBestPositionForModel( aabb );
+                self.trackball.setRadius( aabb.length / 2.3 );
+                self.camera.setBestPositionForModel( aabb );
             } );
 
         } else {
@@ -520,26 +491,26 @@ var morphoviewer = ( function( tools ) {
     /**
      * View the object as a wire frame model.
      * */
-    module.viewWireframe = function() {
-        currentProgram = wireframeProgram;
-        currentProgram.use();
-        setWireFrame();
+    module.Viewer.prototype.viewWireframe = function() {
+        this.currentProgram = this.wireframeProgram;
+        this.currentProgram.use();
+        setWireFrame( this.mesh, this.gl, this.currentProgram );
 
-        renderFunctor = function() {
-            mesh.bind();
-            tools.wireframe.setAttributes( gl, currentProgram, mesh.vertices() );
+        this.renderFunctor = function() {
+            this.mesh.bind();
+            tools.wireframe.setAttributes( this.gl, this.currentProgram, this.mesh.vertices() );
             tools.wireframe.camera = camera.matrix();
-            tools.wireframe.model = modelView;
+            tools.wireframe.model = this.modelView;
             tools.wireframe.setUniforms( currentProgram );
-            gl.drawArrays( gl.TRIANGLES, 0, mesh.vertices() );
-            mesh.unbind();
+            this.gl.drawArrays( this.gl.TRIANGLES, 0, this.mesh.vertices() );
+            this.mesh.unbind();
         };
     };
 
-    function setWireFrame() {
+    function setWireFrame( mesh, gl, program ) {
         mesh.bind();
-        tools.wireframe.enableAttributes(gl, currentProgram);
-        tools.wireframe.setAttributes(gl, currentProgram, mesh.vertices());
+        tools.wireframe.enableAttributes(gl, program);
+        tools.wireframe.setAttributes(gl, program, mesh.vertices());
         mesh.unbind();
     }
 
@@ -548,15 +519,15 @@ var morphoviewer = ( function( tools ) {
      *
      * If the currently active mesh doesn't have any orientation data, then this function doesn't do anything.
      * */
-    module.viewSurfaceOrientation = function() {
+    module.Viewer.prototype.viewSurfaceOrientation = function() {
         //if the mesh doesn't have orientation data, then return immediately
-        if ( !mesh.has( "orientation" ) ) {
+        if ( !this.mesh.has( "orientation" ) ) {
             return;
         }
-        if ( currentProgram.object != colorProgram.object ) {
-            currentProgram = colorProgram;
-            currentProgram.use();
-            setupColorShader();
+        if ( this.currentProgram.object != this.colorProgram.object ) {
+            this.currentProgram = this.colorProgram;
+            this.currentProgram.use();
+            setupColorShader( this.mesh, this.gl, this.currentProgram );
         }
         tools.color.colorMode = 2;
     };
@@ -571,14 +542,14 @@ var morphoviewer = ( function( tools ) {
             return;
         }
         if ( currentProgram.object != colorProgram.object ) {
-            currentProgram = colorProgram;
-            currentProgram.use();
-            setupColorShader();
+            this.currentProgram = colorProgram;
+            this.currentProgram.use();
+            setupColorShader( this.mesh, this.gl, this.currentProgram );
         }
         tools.color.colorMode = 1;
     };
 
-    function setupColorShader() {
+    function setupColorShader( mesh, gl, currentProgram ) {
         mesh.bind();
         tools.color.enableAttributes( gl, currentProgram );
         tools.color.setAttributes( gl, currentProgram, mesh.vertices(), mesh );
@@ -616,7 +587,7 @@ var morphoviewer = ( function( tools ) {
             tools.directional.cameraPosition = camera.getPosition();
             tools.directional.setUniforms( currentProgram );
 
-            gl.drawArrays( gl.TRIANGLES, 0, mesh.vertices() );
+            this.gl.drawArrays( gl.TRIANGLES, 0, mesh.vertices() );
             mesh.unbind();
         }
     };
@@ -624,76 +595,78 @@ var morphoviewer = ( function( tools ) {
     /**
      * View the model under a hemispherical light source.
      * */
-    module.viewHemispherical = function() {
-        currentProgram = hemisphereProgram;
-        currentProgram.use();
+    module.Viewer.prototype.viewHemispherical = function() {
+        this.currentProgram = this.hemisphereProgram;
+        this.currentProgram.use();
 
-        mesh.bind();
-        tools.hemisphere.enableAttributes( gl, currentProgram );
-        tools.hemisphere.setAttributes( gl, currentProgram, mesh.vertices() );
-        mesh.unbind();
+        this.mesh.bind();
+        tools.hemisphere.enableAttributes( this.gl, this.currentProgram );
+        tools.hemisphere.setAttributes( this.gl, this.currentProgram, this.mesh.vertices() );
+        this.mesh.unbind();
 
-        renderFunctor = function() {
-            mesh.bind();
-            tools.hemisphere.setAttributes( gl, currentProgram, mesh.vertices() );
-            tools.hemisphere.camera = camera.matrix();
-            tools.hemisphere.model = modelView;
-            tools.hemisphere.setUniforms( currentProgram );
+        var self = this;
 
-            gl.drawArrays( gl.TRIANGLES, 0, mesh.vertices() );
-            mesh.unbind();
+        this.renderFunctor = function() {
+            self.mesh.bind();
+            tools.hemisphere.setAttributes( self.gl, self.currentProgram, self.mesh.vertices() );
+            tools.hemisphere.camera = self.camera.matrix();
+            tools.hemisphere.model = self.modelView;
+            tools.hemisphere.setUniforms( this.currentProgram );
+
+            self.gl.drawArrays( self.gl.TRIANGLES, 0, self.mesh.vertices() );
+            self.mesh.unbind();
         }
     };
 
     /**
      * View with orthographic projection.
      */
-    module.viewOrtho = function() {
-        camera.viewAsOrtho();
+    module.Viewer.prototype.viewOrtho = function() {
+        this.camera.viewAsOrtho();
     };
 
     /**
      * View with perspective projection.
      */
-    module.viewPerspective = function() {
-        camera.viewAsPerspective();
+    module.Viewer.prototype.viewPerspective = function() {
+        this.camera.viewAsPerspective();
     };
 
-    module.viewLeft = function() {
-        targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
-        camera.positionLeft();
+    module.Viewer.prototype.viewLeft = function() {
+        this.targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
+        this.camera.positionLeft();
     };
 
-    module.viewRight = function() {
-        targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
-        camera.positionRight();
+    module.Viewer.prototype.viewRight = function() {
+        this.targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
+        this.camera.positionRight();
     };
 
-    module.viewTop = function() {
-        targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
-        camera.positionTop();
+    module.Viewer.prototype.viewTop = function() {
+        this.targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
+        this.camera.positionTop();
     };
 
-    module.viewBottom = function() {
-        targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
-        camera.positionBottom();
+    module.Viewer.prototype.viewBottom = function() {
+        this.targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
+        this.camera.positionBottom();
     };
 
-    module.viewFront = function() {
-        targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
-        camera.positionFront();
+    module.Viewer.prototype.viewFront = function() {
+        this.targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
+        this.camera.positionFront();
     };
 
-    module.viewBack = function() {
-        targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
-        camera.positionBack();
+    module.Viewer.prototype.viewBack = function() {
+        this.targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
+        this.camera.positionBack();
     };
 
     /**
      * Show the tracking ball (on by default).
      * */
-    module.showTrackingball = function() {
-        showTrackball = true;
+    module.Viewer.prototype.showTrackingball = function() {
+        this.showTrackball = true;
     };
 
     /**
@@ -717,8 +690,8 @@ var morphoviewer = ( function( tools ) {
      *
      * @param {vec3} color A vector containing the RGB color.
      * */
-    module.setBackgroundColor = function( color ) {
-        gl.clearColor(
+    module.Viewer.prototype.setBackgroundColor = function( color ) {
+        this.gl.clearColor(
             color[0],
             color[1],
             color[2],
@@ -726,7 +699,7 @@ var morphoviewer = ( function( tools ) {
         );
     };
 
-    module.setLightPolarAngle = function( theta ) {
+    module.Viewer.prototype.setLightPolarAngle = function( theta ) {
         tools.hemisphere.polar = theta;
     };
 
