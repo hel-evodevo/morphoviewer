@@ -48,18 +48,11 @@ var morphoviewer = ( function( tools ) {
         //tracking ball
         this.showTrackball = true;
 
-        this.wireframeProgram;	//the wireframe shader program
-        this.illuminationProgram;//the illumination shader program
-        this.colorProgram;		//the surface curvature shader program
-        this.lineProgram;        //the shader for drawing lines
-        this.hemisphereProgram;  //the hemishperical lighting shader program
-        this.currentProgram;     //the shader program that the renderer currently uses
-
         /**
          * Variables for keeping track of the rendering time delta
          * */
-        this.timer;
-        this.endTime;
+        this.timer = null;
+        this.endTime = null;
 
         /*
          * Cache the mesh data for modification and creating new mesh objects during runtime
@@ -132,12 +125,8 @@ var morphoviewer = ( function( tools ) {
                 case 3:
                     self.canvas.onmousemove = function( e ) {
                         onMouseMove( e );
-                        var up = vec3.scale(vec3.create(), self.camera.up(), -self.mouse.dy * self.camera.distanceFromOrigin() * 0.001 ) ;
+                        var up = vec3.scale(vec3.create(), self.camera.up(), -self.mouse.dy * self.camera.distanceFromOrigin() * 0.001 );
                         var right = vec3.scale( vec3.create(), self.camera.right(), self.mouse.dx * self.camera.distanceFromOrigin() * 0.001 );
-                        //mat4.translate( modelView, modelView, up );
-                        //mat4.translate( modelView, modelView, right );
-                        //targetPosition += up;
-                        //targetPosition += right;
                         vec3.add( self.targetPosition, self.targetPosition, up );
                         vec3.add( self.targetPosition, self.targetPosition, right );
                     };
@@ -263,6 +252,7 @@ var morphoviewer = ( function( tools ) {
         this.illuminationProgram = progRes[2];
         this.lineProgram = progRes[4];
         this.hemisphereProgram = progRes[3];
+        this.currentProgram = this.hemisphereProgram;
 
         this.viewHemispherical();
     };
@@ -499,9 +489,9 @@ var morphoviewer = ( function( tools ) {
         this.renderFunctor = function() {
             this.mesh.bind();
             tools.wireframe.setAttributes( this.gl, this.currentProgram, this.mesh.vertices() );
-            tools.wireframe.camera = camera.matrix();
+            tools.wireframe.camera = this.camera.matrix();
             tools.wireframe.model = this.modelView;
-            tools.wireframe.setUniforms( currentProgram );
+            tools.wireframe.setUniforms( this.currentProgram );
             this.gl.drawArrays( this.gl.TRIANGLES, 0, this.mesh.vertices() );
             this.mesh.unbind();
         };
@@ -527,7 +517,7 @@ var morphoviewer = ( function( tools ) {
         if ( this.currentProgram.object != this.colorProgram.object ) {
             this.currentProgram = this.colorProgram;
             this.currentProgram.use();
-            setupColorShader( this.mesh, this.gl, this.currentProgram );
+            setupColorShader( this );
         }
         tools.color.colorMode = 2;
     };
@@ -537,32 +527,32 @@ var morphoviewer = ( function( tools ) {
      *
      * If the currently active mesh doesn't have curvature data, then this function doesn't do anything.
      * */
-    module.viewSurfaceCurvature = function() {
-        if ( !mesh.has( "curvature" ) ) {
+    module.Viewer.prototype.viewSurfaceCurvature = function() {
+        if ( !this.mesh.has( "curvature" ) ) {
             return;
         }
-        if ( currentProgram.object != colorProgram.object ) {
-            this.currentProgram = colorProgram;
+        if ( this.currentProgram.object != this.colorProgram.object ) {
+            this.currentProgram = this.colorProgram;
             this.currentProgram.use();
-            setupColorShader( this.mesh, this.gl, this.currentProgram );
+            setupColorShader( this );
         }
         tools.color.colorMode = 1;
     };
 
-    function setupColorShader( mesh, gl, currentProgram ) {
-        mesh.bind();
-        tools.color.enableAttributes( gl, currentProgram );
-        tools.color.setAttributes( gl, currentProgram, mesh.vertices(), mesh );
-        mesh.unbind();
+    function setupColorShader( self ) {
+        self.mesh.bind();
+        tools.color.enableAttributes( self.gl, self.currentProgram );
+        tools.color.setAttributes( self.gl, self.currentProgram, self.mesh.vertices(), self.mesh );
+        self.mesh.unbind();
 
-        renderFunctor = function() {
-            mesh.bind();
-            tools.color.setAttributes( gl, currentProgram, mesh.vertices(), mesh );
-            tools.color.camera = camera.matrix();
-            tools.color.model = modelView;
-            tools.color.setUniforms( currentProgram );
-            gl.drawArrays( gl.TRIANGLES, 0, mesh.vertices() );
-            mesh.unbind();
+        self.renderFunctor = function() {
+            self.mesh.bind();
+            tools.color.setAttributes( self.gl, self.currentProgram, self.mesh.vertices(), self.mesh );
+            tools.color.camera = self.camera.matrix();
+            tools.color.model = self.modelView;
+            tools.color.setUniforms( self.currentProgram );
+            self.gl.drawArrays( self.gl.TRIANGLES, 0, self.mesh.vertices() );
+            self.mesh.unbind();
         }
     }
 
@@ -570,7 +560,7 @@ var morphoviewer = ( function( tools ) {
      * Set the directional light shader as the active shader.
      * TODO: get rid of this lighting mode
      * */
-    module.viewIlluminated = function() {
+    /*module.viewIlluminated = function() {
         currentProgram = illuminationProgram;
         currentProgram.use();
 
@@ -590,7 +580,7 @@ var morphoviewer = ( function( tools ) {
             this.gl.drawArrays( gl.TRIANGLES, 0, mesh.vertices() );
             mesh.unbind();
         }
-    };
+    };*/
 
     /**
      * View the model under a hemispherical light source.
@@ -672,8 +662,8 @@ var morphoviewer = ( function( tools ) {
     /**
      * Hide the tracking ball.
      * */
-    module.hideTrackingball = function() {
-        showTrackball = false;
+    module.Viewer.prototype.hideTrackingball = function() {
+        this.showTrackball = false;
     };
 
     module.color = {
@@ -703,14 +693,14 @@ var morphoviewer = ( function( tools ) {
         tools.hemisphere.polar = theta;
     };
 
-    module.setLightAzimuthalAngle = function( phi ) {
+    module.Viewer.prototype.setLightAzimuthalAngle = function( phi ) {
         tools.hemisphere.azimuth = phi;
     };
 
-    module.calculateOrientation = function() {
-        meshCache.orientation = tools.surfaceOrientationAboutCamera( meshCache.normal, camera.rotation() );
-        mesh = new tools.Mesh(gl);
-        mesh.build( meshCache );
+    module.Viewer.prototype.calculateOrientation = function() {
+        this.meshCache.orientation = tools.surfaceOrientationAboutCamera( this.meshCache.normal, this.camera.rotation() );
+        this.mesh = new tools.Mesh( this.gl );
+        this.mesh.build( this.meshCache );
     };
 
     //re-export the io namespace

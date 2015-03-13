@@ -355,7 +355,6 @@ var morphoviewer = ( function( module ) {
      * mat - the camera rotation matrix
      * */
     module.surfaceOrientationAboutCamera = function( norms, mat ) {
-        console.log(mat);
         var regions = [];
         var n = 8;  //the number of orientations we are going to consider
         for ( var i = 0; i < norms.length; i+= 3 ) {
