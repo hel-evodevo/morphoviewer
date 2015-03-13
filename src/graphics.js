@@ -369,6 +369,13 @@ var morphoviewer = ( function( module ) {
         this.targetZoomFactor = 1.0;
     };
 
+    module.Camera.prototype.setFOV = function( val ) {
+        this.verticalFOV = val;
+        if ( this.verticalFOV <= 0.0 ) {
+            this.verticalFOV = Math.abs( this.verticalFOV );
+        }
+    };
+
     module.Camera.prototype.matrix = function() {
         return mat4.multiply( mat4.create(), this.perspective(), this.view() );
     };

@@ -689,6 +689,13 @@ var morphoviewer = ( function( tools ) {
         );
     };
 
+    /**
+     * @param {Number} val The viewing angle, in degrees.
+     * */
+    module.Viewer.prototype.setFOV = function( val ) {
+        this.camera.setFOV( Math.PI * val / 180.0 );
+    };
+
     module.Viewer.prototype.setLightPolarAngle = function( theta ) {
         tools.hemisphere.polar = theta;
     };
