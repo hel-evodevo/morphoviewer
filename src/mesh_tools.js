@@ -314,8 +314,6 @@ var morphoviewer = ( function( module ) {
 
         for ( var i = 0; i < scalars.length; i++ ) {
             scalars[i] /= largest;	//normalize!
-            /*apply a curve to increase "contrast" of the lower curvature values.*/
-            scalars[i] = 1 - Math.exp(2.99572315 - 15*scalars[i]) / 20.0;
         }
 
         return scalars;

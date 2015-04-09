@@ -863,7 +863,10 @@ var morphoviewer = ( function( module ) {
 
             "void main() {\n" +
             "	if ( colorMode == 1 ) {	//dirichlet normal energy\n" +
-            "		fragColor = yellowToRed( curvature );\n" +
+            "       float scalar = ( exp(1.3*curvature) - 1.0 ) / ( exp(1.3) - 1.0 );\n" +
+            "       \n" +
+            "       \n" +
+            "		fragColor = yellowToRed( scalar );\n" +
             "	} else if ( colorMode == 2 ) {	//orientation map\n" +
             "		fragColor = longRainbow( orientation );\n" +
             "	}\n" +
