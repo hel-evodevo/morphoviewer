@@ -1,6 +1,6 @@
 #Morphoviewer.js
 
-![Alt text](https://rawgit.com/Nelarius/Morphoviewer/master/images/toothbanner.png "Akodon serrensis")
+![Alt text](https://cdn.rawgit.com/Nelarius/Morphoviewer/master/images/toothbanner.png "Akodon serrensis")
 
 ####Render a 3d mesh in the browser and display its surface properties.
 
