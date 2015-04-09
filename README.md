@@ -1,4 +1,7 @@
 #Morphoviewer.js
+
+![Alt text](https://rawgit.com/Nelarius/Morphoviewer/master/images/toothbanner.png "Akodon serrensis")
+
 ####Render a 3d mesh in the browser and display its surface properties.
 
 Morphoviewer.js provides facilities for loading .OBJ files, csv point clouds and a certain type of binary file (a
