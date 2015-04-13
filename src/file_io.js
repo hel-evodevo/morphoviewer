@@ -40,8 +40,30 @@ var morphoviewer = ( function( module ) {
      * @returns {String} the type string. Valid types are "stl", "obj", "ply", "csv".
      * */
     module.io.getFileType = function( data ) {
+        //check first for STL binary
         BufferView( data );
-        //query bufferview what type of file the data corresponds to
+        // get the first line
+        var line = BufferView.readLine();
+        var tokens = line.trim().split(/\s+/);
+
+        //first handle case 'stl'
+        if ( tokens[0] === "solid" ) {
+            // do some kind of regular expression check
+            // '^solid (name)$'
+            return "stl";
+        }
+        BufferView.seek( 80 );
+        BufferView.isLittleEndian(true);
+        var tris = BufferView.getUint32();
+        BufferView.isLittleEndian(false);
+        BufferView.seek(0);
+        if ( BufferView.size() == 84 + tris*50 ) {
+            return "stl";
+        }
+
+        if ( tokens[0] === "ply" ) {
+            return "ply";
+        }
 
         return "unrecognized";
     };
@@ -64,9 +86,12 @@ var morphoviewer = ( function( module ) {
         if ( typeof(offset) === "undefined" ) {
             offset = 0;
         }
+        arguments.callee.bytes = buffer.length;
         arguments.callee.buffer = buffer;
         arguments.callee.view = jDataView( buffer, offset, buffer.length - offset, littleEndian );
     }
+
+    BufferView.size = function() { return BufferView.bytes; };
 
     /**
      * If reading binary data, set the correct endianness.*/
@@ -589,11 +614,40 @@ var morphoviewer = ( function( module ) {
         BufferView.readLine(); // get rid of "endloop"
     }
 
-    function parseBinarySTL( target ) {}
+    function parseBinarySTL( target ) {
+        var verts = target["v"];
+        var norms = target["vn"];
+        BufferView.seek( 80 );
+        var tris = BufferView.getUint32();
+
+        for ( var i = 0; i < tris; i++ ) {
+            var nx = BufferView.getFloat32();
+            var ny = BufferView.getFloat32();
+            var nz = BufferView.getFloat32();
+            norms.push( nx, ny, nz );
+            norms.push( nx, ny, nz );
+            norms.push( nx, ny, nz );
+
+            for ( var j = 0; j < 3; j++ ) {
+                verts.push(
+                    BufferView.getFloat32(),
+                    BufferView.getFloat32(),
+                    BufferView.getFloat32()
+                );
+            }
+
+            //get rid of the attribute count
+            BufferView.getUint16();
+        }
+    }
 
     module.io.loadSTL = function( file, onload ) {
         var loader = function( data ) {
             var buffer = new Uint8Array( data );
+
+            var filetype = module.io.getFileType( buffer, 0, true );
+            console.log(filetype);
+
             BufferView( buffer, 0, true );
             var model = { v: [], vn: [] };
             //figure out if binary or ascii STL

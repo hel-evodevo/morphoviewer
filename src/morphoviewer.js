@@ -332,7 +332,12 @@ var morphoviewer = ( function( tools ) {
         );
     }
 
-    /*module.Viewer.prototype.viewData = function( file ) {
+    /**
+     * @brief View a 3d file. The file can be a csv point cloud, ply file, or stl file.
+     *
+     * @param {String} file The file URL.
+     * */
+    module.Viewer.prototype.view = function( file ) {
         var self = this;
         var loader = function( data ) {
             var type = tools.io.getFileType( data );
@@ -351,7 +356,7 @@ var morphoviewer = ( function( tools ) {
             }
         };
         tools.io.loadFile( file, loader );
-    };*/
+    };
 
     /**
      * View a 3d file. The file can be a csv point cloud, or a .OBJ mesh file.
