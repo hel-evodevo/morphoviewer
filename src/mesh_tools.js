@@ -119,6 +119,35 @@ var morphoviewer = ( function( module ) {
         };
     };
 
+    module.getAabbFromUnwrapped = function( verts ) {
+        var xmin = Number.POSITIVE_INFINITY,
+            xmax = Number.NEGATIVE_INFINITY,
+            ymin = Number.POSITIVE_INFINITY,
+            ymax = Number.NEGATIVE_INFINITY,
+            zmin = Number.POSITIVE_INFINITY,
+            zmax = Number.NEGATIVE_INFINITY;
+
+        for ( var i = 0; i < verts.length; i += 3 ) {
+            if ( verts[i] < xmin ) { xmin = verts[i]; }
+            if ( verts[i] > xmax ) { xmax = verts[i]; }
+            if ( verts[i+1] < ymin ) { ymin = verts[i+1]; }
+            if ( verts[i+1] > ymax ) { ymax = verts[i+1]; }
+            if ( verts[i+2] < zmin ) { zmin = verts[i+2]; }
+            if ( verts[i+2] > zmax ) { zmax = verts[i+2]; }
+        }
+
+        var sqrDist = ( xmax - xmin ) * (xmax - xmin );
+        sqrDist += ( ymax - ymin ) * ( ymax - ymin );
+        sqrDist += ( zmax - zmin ) * ( zmax - zmin );
+
+        return {
+            min: { x: xmin, y: ymin, z: zmin },
+            max: { x: xmax, y: ymax, z: zmax },
+            center: { x: xmin+xmax / 2.0, y: ymin+ymax / 2.0, z: zmin+zmax / 2.0 },
+            length: Math.sqrt( sqrDist )
+        };
+    };
+
     /**
      * Build a triangulated mesh out of a set of points.
      *

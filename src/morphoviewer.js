@@ -332,6 +332,27 @@ var morphoviewer = ( function( tools ) {
         );
     }
 
+    /*module.Viewer.prototype.viewData = function( file ) {
+        var self = this;
+        var loader = function( data ) {
+            var type = tools.io.getFileType( data );
+            if ( type === "stl" ) {
+                //
+            } else if ( type === "ply" ) {
+                //
+            } else if ( type === "csv" ) {
+                //
+            } else if ( type === "obj" ) {
+                //
+            } else {
+                //don't load anything
+                console.log( "morphoviewer.Viewer.viewData: file format unrecognized." );
+                return;
+            }
+        };
+        tools.io.loadFile( file, loader );
+    };*/
+
     /**
      * View a 3d file. The file can be a csv point cloud, or a .OBJ mesh file.
      *
@@ -473,8 +494,31 @@ var morphoviewer = ( function( tools ) {
                 self.camera.setBestPositionForModel( aabb );
             } );
 
+        } else if ( type == "stl" ) {
+            tools.io.loadSTL( file, function( model ) {
+                var verts = model["v"]; // these are unwrapped
+                var norms = model["vn"];
+                tools.centerPointCloud( verts );
+                var curvature = tools.surfaceVariation( verts, norms );
+                var orientation = tools.surfaceOrientation( norms );
+                self.meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
+                self.meshCache.vertex = verts;
+                self.meshCache.normal = norms;
+                self.meshCache.orientation = orientation;
+                self.meshCache.curvature = curvature;
+                self.mesh = new tools.Mesh( self.gl );
+                self.mesh.build({
+                    vertex: verts,
+                    normal: norms,
+                    curvature: curvature,
+                    orientation: orientation
+                });
+                var aabb = tools.getAabbFromUnwrapped( verts );
+                self.trackball.setRadius( aabb.length / 2.3 );
+                self.camera.setBestPositionForModel( aabb );
+            } );
         } else {
-            throw "morphoviewer.viewData: unrecognized 3d file type";
+            throw "morphoviewer.Viewer.viewData: unrecognized 3d file type";
         }
     };
 
@@ -712,9 +756,11 @@ var morphoviewer = ( function( tools ) {
 
     //re-export the io namespace
     module.io = {};
-    module.io.loadPLY = tools.io.loadPLY;
-    module.io.loadOBJ = tools.io.loadOBJ;
-    module.io.loadCSV = tools.io.loadCSV;
+    module.io.loadFile      = tools.io.loadFile;
+    module.io.getFileType   = tools.io.getFileType;
+    module.io.loadPLY       = tools.io.loadPLY;
+    module.io.loadOBJ       = tools.io.loadOBJ;
+    module.io.loadCSV       = tools.io.loadCSV;
 
     return module;
 }( morphoviewer ));

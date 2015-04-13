@@ -26,6 +26,26 @@ var morphoviewer = ( function( module ) {
 
     module.io = {};
 
+    module.io.loadFile = function( file, onload ) {
+        var request = new XMLHttpRequest();
+        request.open( "GET", file, true );	//gets performed asynchronously
+        request.responseType = "arraybuffer";
+        request.onload = function ( e ) { onload( e.target.response ); };
+        request.send();
+    };
+
+    /**
+     * @brief Get the file type string of a block of uint8 data.
+     * @param data {Uint8Array} the block of data to analyze
+     * @returns {String} the type string. Valid types are "stl", "obj", "ply", "csv".
+     * */
+    module.io.getFileType = function( data ) {
+        BufferView( data );
+        //query bufferview what type of file the data corresponds to
+
+        return "unrecognized";
+    };
+
     function loadFile( file, onload ) {
         var request = new XMLHttpRequest();
         request.open( "GET", file, true );	//gets performed asynchronously
@@ -55,6 +75,8 @@ var morphoviewer = ( function( module ) {
         var length = BufferView.buffer.length;
         BufferView.view = jDataView( BufferView.buffer, offset, length - offset, littleEndian );
     };
+
+    BufferView.seek = function( byteOffset ) { BufferView.view.seek( byteOffset ) };
 
     BufferView.tell = function() { return BufferView.view.tell(); };
 
@@ -104,6 +126,9 @@ var morphoviewer = ( function( module ) {
         while ( ch != '\n' ) {
             res = res.concat( ch );
             ch = BufferView.getChar();
+            while ( ch == '\t' || ch == '' ) {
+                ch = BufferView.getChar();
+            }
         }
         return res;
     };
@@ -147,6 +172,13 @@ var morphoviewer = ( function( module ) {
             }
         }
         return res.join("");
+    };
+
+    BufferView.peekToken = function() {
+        var pos = BufferView.view.tell();
+        var token = BufferView.readToken();
+        BufferView.view.seek( pos );
+        return token;
     };
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -500,6 +532,77 @@ var morphoviewer = ( function( module ) {
             BufferView( buffer );
             var model = parseOBJ();
 
+            if ( typeof(onload) != "undefined" ) {
+                onload( model );
+            }
+        };
+        loadFile( file, loader );
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // STL parser methods & prototypes
+    ////////////////////////////////////////////////////////////////////////////////
+
+    // this functions assumes that BufferView has already been set
+    function parseAsciiSTL( target ) {
+        parseSTLSolid( target );
+    }
+
+    function parseSTLSolid( target ) {
+        BufferView.readLine();  //get rid of "solid <name>"
+        while( BufferView.peekToken() === "facet" ) {
+            parseSTLFacet( target );
+        }
+        var token = BufferView.peekToken();
+        if ( token !== "endsolid" ) {
+            console.log("parseSTLSolid: expected endsolid but got " + token );
+        }
+    }
+
+    function parseSTLFacet( target ) {
+        var line = BufferView.readLine();
+        var tokens = line.trim().split(/\s+/);
+        var normals = target["vn"];
+        normals.push( parseFloat(tokens[2]) );
+        normals.push( parseFloat(tokens[3]) );
+        normals.push( parseFloat(tokens[4]) );
+        normals.push( parseFloat(tokens[2]) );
+        normals.push( parseFloat(tokens[3]) );
+        normals.push( parseFloat(tokens[4]) );
+        normals.push( parseFloat(tokens[2]) );
+        normals.push( parseFloat(tokens[3]) );
+        normals.push( parseFloat(tokens[4]) );
+        parseSTLLoop( target );
+        BufferView.readLine();  //get rid of "endfacet"
+    }
+
+    function parseSTLLoop( target ) {
+        var vertices = target["v"];
+        BufferView.readLine();  //get rid of "outer loop"
+        for ( i = 0; i < 3; i++ ) {
+            var line = BufferView.readLine();
+            var tokens = line.trim().split(/\s+/);
+            vertices.push( parseFloat(tokens[1]) );
+            vertices.push( parseFloat(tokens[2]) );
+            vertices.push( parseFloat(tokens[3]) );
+        }
+        BufferView.readLine(); // get rid of "endloop"
+    }
+
+    function parseBinarySTL( target ) {}
+
+    module.io.loadSTL = function( file, onload ) {
+        var loader = function( data ) {
+            var buffer = new Uint8Array( data );
+            BufferView( buffer, 0, true );
+            var model = { v: [], vn: [] };
+            //figure out if binary or ascii STL
+            var token = BufferView.peekToken();
+            if ( token === "solid" ) {
+                parseAsciiSTL( model );
+            } else {
+                parseBinarySTL( model );
+            }
             if ( typeof(onload) != "undefined" ) {
                 onload( model );
             }
