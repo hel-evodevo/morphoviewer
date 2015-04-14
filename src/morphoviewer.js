@@ -340,18 +340,132 @@ var morphoviewer = ( function( tools ) {
     module.Viewer.prototype.view = function( file ) {
         var self = this;
         var loader = function( data ) {
-            var type = tools.io.getFileType( data );
+            var buffer = new Uint8Array( data );
+            var type = tools.io.getFileType( buffer );
+
             if ( type === "stl" ) {
-                //
+                var model = tools.parseSTL( buffer );
+                var verts = model["v"]; // these are unwrapped
+                var norms = model["vn"];
+                var curvature = tools.surfaceVariation( verts, norms );
+                var orientation = tools.surfaceOrientation( norms );
+                tools.centerPointCloud( verts, "unwrapped" );
+                self.meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
+                self.meshCache.vertex = verts;
+                self.meshCache.normal = norms;
+                self.meshCache.orientation = orientation;
+                self.meshCache.curvature = curvature;
+                self.mesh = new tools.Mesh( self.gl );
+                self.mesh.build({
+                    vertex: verts,
+                    normal: norms,
+                    curvature: curvature,
+                    orientation: orientation
+                });
+                var aabb = tools.getAabbFromUnwrapped( verts );
+                self.trackball.setRadius( aabb.length / 2.3 );
+                self.camera.setBestPositionForModel( aabb );
             } else if ( type === "ply" ) {
-                //
+                var model = tools.parsePLY( buffer );
+                var verts = [];
+                var vertex = model["vertex"];
+                var vertex_x = vertex["x"];
+                var vertex_y = vertex["y"];
+                var vertex_z = vertex["z"];
+                var length = model["vertex"]["x"].length;
+                for ( var i = 0; i < length; i++ ) {
+                    verts.push( [ vertex_x[i], vertex_y[i], vertex_z[i] ] );
+                }
+
+                var tris = [];
+                var vertex_indices = model["face"]["vertex_indices"];
+                length = vertex_indices.length;
+                //noinspection JSDuplicatedDeclaration
+                for ( var i = 0; i < length; i++ ) {
+                    tris.push( vertex_indices[i] );
+                }
+
+                var norms = [];
+                if ( vertex["nx"] !== undefined ) {
+                    var nx = vertex["nx"];
+                    var ny = vertex["ny"];
+                    var nz = vertex["nz"];
+                    for ( var i = 0; i < length; i++ ) {
+                        norms.push( [ nx[i], ny[i], nz[i] ] );
+                    }
+                } else {
+                    norms = tools.vertexNormals( verts, tris );
+                }
+
+                var orientation = [];
+                if ( vertex["orientation"] !== undefined ) {
+                    var o = vertex["orientation"];
+                    for ( var i = 0; i < length; i++ ) {
+                        orientation.push( o[i] );
+                    }
+                }
+
+                var curvature = [];
+                if ( model["face"]["curvature"] !== undefined ) {
+                    var c = model["face"]["curvature"];
+                    for ( var i = 0; i < c.length; i++ ) {
+                        curvature.push( c[i], c[i], c[i] );
+                    }
+                }
+                tools.centerPointCloud( verts );
+                var verts_unwrapped = tools.unwrapVectorArray( verts, tris );
+                var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
+                self.meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
+                self.meshCache.vertex = verts_unwrapped;
+                self.meshCache.normal = norms_unwrapped;
+
+                var meshObj = {
+                    vertex: verts_unwrapped,
+                    normal: norms_unwrapped
+                };
+                //if curvature & orientation were supplied, then add them to the object
+                if ( vertex["orientation"] !== undefined ) {
+                    meshObj.orientation = tools.unwrapArray( orientation, tris );
+                    self.meshCache.orientation = meshObj.orientation;
+                }
+                if ( model["face"]["curvature"] !== undefined ) {
+                    meshObj.curvature = curvature;
+                    self.meshCache.curvature = curvature;
+                }
+                self.mesh = new tools.Mesh( self.gl );
+                self.mesh.build( meshObj );
+                var aabb = tools.getAabb( verts );
+                self.trackball.setRadius( aabb.length / 2.3 );
+                self.camera.setBestPositionForModel( aabb );
             } else if ( type === "csv" ) {
-                //
-            } else if ( type === "obj" ) {
-                //
+                var model = tools.parseCSV( buffer, ',' );
+                var verts = model["points"];
+                tools.centerPointCloud( verts );
+                var tris = tools.triangulate( verts );
+                var norms = tools.vertexNormals( verts, tris );
+
+                var verts_unwrapped = tools.unwrapVectorArray( verts, tris );
+                var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
+                var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
+                var orientation = tools.surfaceOrientation( norms_unwrapped );
+                self.meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
+                self.meshCache.vertex = verts_unwrapped;
+                self.meshCache.normal = norms_unwrapped;
+                self.meshCache.orientation = orientation;
+                self.meshCache.curvature = curvature;
+                self.mesh = new tools.Mesh( self.gl );
+                self.mesh.build( {
+                    vertex: verts_unwrapped,
+                    normal: norms_unwrapped,
+                    curvature: curvature,
+                    orientation: orientation
+                } );
+                var aabb = tools.getAabb( verts );
+                self.trackball.setRadius( aabb.length / 2.3 );
+                self.camera.setBestPositionForModel( aabb );
             } else {
                 //don't load anything
-                console.log( "morphoviewer.Viewer.viewData: file format unrecognized." );
+                alert("morphoviewer.Viewer.view: unrecognized file format" );
                 return;
             }
         };
@@ -503,9 +617,9 @@ var morphoviewer = ( function( tools ) {
             tools.io.loadSTL( file, function( model ) {
                 var verts = model["v"]; // these are unwrapped
                 var norms = model["vn"];
-                tools.centerPointCloud( verts );
                 var curvature = tools.surfaceVariation( verts, norms );
                 var orientation = tools.surfaceOrientation( norms );
+                tools.centerPointCloud( verts, "unwrapped" );
                 self.meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
                 self.meshCache.vertex = verts;
                 self.meshCache.normal = norms;

@@ -44,11 +44,27 @@ var morphoviewer = ( function( module ) {
     }
 
     /**
+     * @brief Center the point cloud on the origin.
+     * @param points {Array} The points
+     * @param arraytype {String} "wrapped" (by default), or "unwrapped".
+     * */
+    module.centerPointCloud = function( points, arraytype ) {
+        if ( typeof( arraytype ) === "undefined" ) {
+            arraytype = "wrapped";
+        }
+        if ( arraytype === "wrapped" ) {
+            centerPointCloudWrapped( points );
+        } else if ( arraytype === "unwrapped" ) {
+            centerPointCloudUnwrapped( points );
+        }
+    };
+
+    /**
      * Center the point cloud on the origin.
      *
      * @param {Array} points an array of triplets, each triplet representing a (x, y, z) point.
      */
-    module.centerPointCloud = function( points ) {
+    function centerPointCloudWrapped( points ) {
         var cov = centerOfVolume( points );
 
         for ( var i = 0; i < points.length; i++ ) {
@@ -56,7 +72,30 @@ var morphoviewer = ( function( module ) {
             points[i][1] -= cov[1];
             points[i][2] -= cov[2];
         }
-    };
+    }
+
+    function centerPointCloudUnwrapped( points ) {
+        var covX = 0.0;	//center of colume for each coordinate
+        var covY = 0.0;
+        var covZ = 0.0;
+
+        for ( var i = 0; i < points.length; i += 3 ) {
+            covX += points[i];
+            covY += points[i+1];
+            covZ += points[i+2];
+        }
+
+        covX /= points.length;
+        covY /= points.length;
+        covZ /= points.length;
+
+        for ( var i = 0; i < points.length; i += 3 ) {
+            points[i] -= covX;
+            points[i+1] -= covY;
+            points[i+2] -= covZ;
+        }
+    }
+
 
     /**
      * Get the unwrapped (containing repeated vertices) array

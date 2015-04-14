@@ -65,6 +65,20 @@ var morphoviewer = ( function( module ) {
             return "ply";
         }
 
+        // get three lines
+        // this is a retarded way to check for CSV
+        var line1 = BufferView.readLine();
+        var line2 = BufferView.readLine();
+        var line3 = BufferView.readLine();
+        var tokens1 = line1.trim().split(',');
+        var tokens2 = line2.trim().split(',');
+        var tokens3 = line3.trim().split(',');
+        if ( tokens1.length == tokens2.length  &&
+            tokens2.length == tokens3.length &&
+            tokens3.length == 3 ) {
+            return "csv";
+        }
+
         return "unrecognized";
     };
 
@@ -473,26 +487,37 @@ var morphoviewer = ( function( module ) {
     }
 
     /**
+     * @brief Parse a PLY file buffer.
+     * @param {Uint8Array} The file to be parsed in the form of a Uint8Array buffer.
+     * @returns {Object} An object containing a key for each element of the PLY file.
+     * */
+    module.parsePLY = function( buffer ) {
+        BufferView(buffer);
+        var parseData = parsePLYHeader();
+        var elementParsers = parseData[0];
+        var model = parseData[1];
+        var format = parseData[2];
+
+        if (format != "ascii") {
+            //set as default of jDataview
+            var littleEndian = false;
+            if (format === "little") {
+                littleEndian = true;
+            }
+            BufferView.isLittleEndian(littleEndian);
+        }
+        parsePLYData(elementParsers);
+
+        return model;
+    };
+
+    /**
      * @returns {Object} An object, where each element is represented by a named object, and each
      * property by a named array within the object. */
     module.io.loadPLY = function( file, onload ) {
         var loader = function( data ) {
             var buffer = new Uint8Array( data );
-            BufferView(buffer);
-            var parseData = parsePLYHeader();
-            var elementParsers = parseData[0];
-            var model = parseData[1];
-            var format = parseData[2];
-
-            if (format != "ascii") {
-                //set as default of jDataview
-                var littleEndian = false;
-                if (format === "little") {
-                    littleEndian = true;
-                }
-                BufferView.isLittleEndian(littleEndian);
-            }
-            parsePLYData(elementParsers);
+            var model = module.parsePLY( buffer );
 
             if ( typeof(onload) != "undefined" ) {
                 onload( model );
@@ -551,11 +576,16 @@ var morphoviewer = ( function( module ) {
         return target;
     }
 
+    module.parseOBJ = function( buffer ) {
+        BufferView( buffer );
+        var model = parseOBJ();
+        return model;
+    };
+
     module.io.loadOBJ = function( file, onload ) {
         var loader = function( data ) {
             var buffer = new Uint8Array( data );
-            BufferView( buffer );
-            var model = parseOBJ();
+            var model = module.parseOBJ( buffer );
 
             if ( typeof(onload) != "undefined" ) {
                 onload( model );
@@ -641,22 +671,25 @@ var morphoviewer = ( function( module ) {
         }
     }
 
+    module.parseSTL = function( buffer ) {
+
+        BufferView( buffer, 0, true );
+        var model = { v: [], vn: [] };
+        //figure out if binary or ascii STL
+        var token = BufferView.peekToken();
+        if ( token === "solid" ) {
+            parseAsciiSTL( model );
+        } else {
+            parseBinarySTL( model );
+        }
+
+        return model;
+    };
+
     module.io.loadSTL = function( file, onload ) {
         var loader = function( data ) {
             var buffer = new Uint8Array( data );
-
-            var filetype = module.io.getFileType( buffer, 0, true );
-            console.log(filetype);
-
-            BufferView( buffer, 0, true );
-            var model = { v: [], vn: [] };
-            //figure out if binary or ascii STL
-            var token = BufferView.peekToken();
-            if ( token === "solid" ) {
-                parseAsciiSTL( model );
-            } else {
-                parseBinarySTL( model );
-            }
+            var model = module.parseSTL( buffer );
             if ( typeof(onload) != "undefined" ) {
                 onload( model );
             }
@@ -683,6 +716,15 @@ var morphoviewer = ( function( module ) {
         return model;
     }
 
+    module.parseCSV = function( buffer, delimiter ) {
+        if ( typeof(delimiter) === "undefined" ) {
+            delimiter = ",";
+        }
+        BufferView( buffer );
+        var model = parseCSV( delimiter );
+        return model;
+    };
+
     /**
      * @param {String} file the name of the file to be loaded
      * @param {Function} onload the function to be executed once the file has been received
@@ -693,8 +735,7 @@ var morphoviewer = ( function( module ) {
         }
         var loader  =function( data ) {
             var buffer = new Uint8Array( data );
-            BufferView( buffer );
-            var model = parseCSV( delimiter );
+            var model = module.parseCSV( buffer, delimiter );
 
             if ( typeof(onload) != "undefined" ) {
                 onload( model );
