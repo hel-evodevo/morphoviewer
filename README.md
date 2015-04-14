@@ -2,98 +2,143 @@
 
 ![Alt text](https://cdn.rawgit.com/Nelarius/Morphoviewer/master/images/toothbanner.png "Akodon serrensis")
 
-####Render a 3d mesh in the browser and display its surface properties.
+##What is this?
 
-Morphoviewer.js provides facilities for loading .OBJ files, csv point clouds and a certain type of binary file (a
-morphobuffer file) and rendering them using WebGL. In order to render a point cloud, the points need to be triangulated,
-which is something that morphoviewer.js does for you automatically, using a Delaunay triangulation algorithm.
-
-Using morphoviewer.js is simple. The library specifies the morphoviewer namespace, which contains methods for viewing
-different kinds of files, and controlling the type of shading, view, type of projection, etc.
+This library is intended for viewing the geometry, wire frame, surface orientation, and surface curvature, of a
+3d object, in a web browser. The code uses WebGL and HTML canvas elements to handle rendering.
 
 An example of morphoviewer.js in use is [here](https://github.com/Nelarius/Nelarius.github.io/blob/master/index.html).
 
+###How to use it
+
+Just include the minified javascript source file from the `distribution/` folder in your project.
+
+##The interface
+
+`morphoviewer.js` defines the following classes & functions:
+
+    morphoviewer.Viewer( canvasid )
+
+    morphoviewer.Viewer.setBackgroundColor( array )
+
+    morphoviewer.Viewer.view( url )
+    morphoviewer.Viewer.viewdata( url, type )
+
+    morphoviewer.Viewer.viewOrtho()
+    morphoviewer.Viewer.viewPerspective()
+    morphoviewer.Viewer.setFOV( value )
+
+    morphoviewer.Viewer.viewHemispherical()
+    morphoviewer.Viewer.viewWireframe()
+    morphoviewer.Viewer.viewSurfaceCurvature()
+    morphoviewer.Viewer.viewSurfaceOrientation()
+    morphoviewer.Viewer.calculateOrientation()
+
+    morphoviewer.Viewer.setLightPolarAngle( angle )
+    morphoviewer.Viewer.setLightAzimuthalAngle( angle )
+
+    morphoviewer.Viewer.showTrackingball()
+    morphoviewer.Viewer.hideTrackingball()
+
+    morphoviewer.Viewer.viewLeft()
+    morphoviewer.Viewer.viewRight()
+    morphoviewer.Viewer.viewTop()
+    morphoviewer.Viewer.viewBottom()
+    morphoviewer.Viewer.viewFront()
+    morphoviewer.Viewer.viewBack()
+
+    morphoviewer.io.loadFile( file, loadcallback )
+    morphoviewer.io.loadPLY( file )
+    morphoviewer.io.loadCSV( file )
+    morphoviewer.io.loadSTL( file )
+    morphoviewer.io.getFileType( filebuffer )
+
+###`Viewer` class
+
+After creating a canvas element in your HTML, use this class to populate the canvas. These tasks could be done
+as follows:
+
+    <canvas width="640" height="400" id="testcanvas">
+      Your browser doesn't appear to support the HTML5 canvas element.
+      Consider updating your browser!
+    </canvas>
+    <script>
+      var viewer = new morphoviewer.Viewer("testcanvas");
+      viewer.setBackgroundColor([0.854902,0.886275,0.901961]);
+      viewer.view( "https://cdn.rawgit.com/Nelarius/Nelarius.github.io/master/obj/akodon.ply" );
+    </script>
+
+A new `Viewer` is created, and data is loaded by calling its `view` method. `Viewer.view` accepts PLY, STL, and CSV
+files (containing xyz coordinates).
+
+####Supported Stanford polygonal file format (.PLY) features
+
+Both ASCII and binary PLY can be used. `morphoviewer.Viewer.view` looks for the following elements and properties:
+
+    element vertex <element count>
+    property float x
+    property float y
+    property float z
+    property float nx
+    property float ny
+    property float nz
+    property float orientation
+    element face <element count>
+    property list uchar int vertex_indices
+    property float curvature
+
+It is optional to include `nx`, `ny`, `nz`, `orientation`, and `curvature` in the PLY file.
+
+The algorithms according to which the values of `orientation` and `curvature` are calculated are documented elsewhere.
+
+####Supported STL file format features
+
+Both ASCII and binary STL can be used.
+
+####Text CSV format
+
+`moprhoviewer.Viewer.view` can load text files containing `x`, `y`, and `z` coordinates separated by a comma.
+
 ##Camera controls
-The library provides automatic camera controls for the WebGL canvas; no code is required to activate them. The controls
+`morphoviewer.Viewer` captures all mouse controls over the canvas element. The controls
 are: mouse wheel to zoom in and out, left button down + mouse move to rotate the camera, right mouse button down + 
 mouse move to pan the camera.
 
-##Initialize a WebGL canvas
-Before this library's functions can be called, a WebGL canvas must be initialized. To do so, you can write 
-`<canvas id="glcanvas" width="800" height="600"></canvas>` in your HTML document. Once a canvas exists, you 
-call `morphoviewer.initialize( id )`, where `id` is the id of your canvas. By default, the canvas id `"glcanvas"` 
-is searched for in the DOM.
-
-##Loading a file
-To load a file for viewing, simply do `morphoviewer.viewData( name, type)`, where `name` is the name of the file to be displayed,
-and `type` is the type of the file. Valid types are `"obj"` for displaying Wavefront .OBJ files, `"point cloud"` for
-displaying text csv point clouds, and `"ply"` for .PLY files (both ASCII and binary).
-
-###Supported Wavefront object file (.OBJ) features
-The library is capable of loading vertices (`v`), vertex normals (`vn`), and faces (`f`). Other types, such as texture
-coordinates (`vt`) are ignored.
-
-The library does NOT support defining faces with negative indices, or defining separate texture coordinate and normal
-indices using the `/` notation.
-
-The `moprhoviewer.io.loadOBJ(<file>, <onload>)` returns the following object: `{ "v": [], "f": [], "vn": []}`, where
-each array contains a triplet of values.
-
-###Supported Stanford polygonal file format (.PLY) features
-The library can load both binary and Ascii PLY. The library loads the following common features:
-
-`element vertex <element count>`
-
-`property float x`
-
-`property float y`
-
-`property float z`
-
-`property float nx`
-
-`property float ny`
-
-`property float nz`
-
-`element face <element count>`
-
-`property list uchar int vertex_indices`
-
-The `morphoviewer.io.loadPLY(<file>, <onload>)` function returns an object, where each element is it's own named object, and each
-property is an array, belonging to an element object. So the previous header would result in the following object: 
-`{ "vertex": { "x": [], "y": [], "z": [], "nx": [], "ny": [] }, "face": { "vertex_indices": [] } }`.
-
-###Text CSV format
-`morphoviewer.io.loadCSV(<file>, <onload>, <delimiter>)` loads files containing `x`, `y`, and `z` coordinates separated
- by a delimiter. The `<delimiter>` parameter is set to `,` by default. The function returns an the following object:
- `{ "points": [] }`, where each array element is a triplet of values.
-
-##Changing projection
-Moprhoviewer.js renders using orthographic projection by default. To control the type of projection used, simply
-do `morphoviewer.viewPerspective()` for rendering using perspective projection, or `morphoviewer.viewOrtho()` for
-rendering using orthographic projection.
+##View in perspective or orthographic projection
+Objets are rendered using orthographic projection by default. To control the type of projection used, simply
+do `morphoviewer.Viewer.viewPerspective()` for rendering using perspective projection, or
+`morphoviewer.Viewer.viewOrtho()` for rendering using orthographic projection. Use
+`morphoviewer.Viewer.setFOV( value )` to control the vertical field of view when viewing objects in perspective
+projection mode.
 
 ##Changing shading mode
-Morphoviewer.js can render the surface as a wireframe, or illuminate the surface using directional lighting, or 
-hemispherical lighting, or color the surface according to its curvature or orientation.
+The object's surface can be rendered using illumination, or a wire frame, or colored according to the curvature or
+orientation. To do this, use on of the following four methods:
 
-`morphoviewer.viewWireframe()` to view in wireframe.
+    morphoviewer.Viewer.viewHemispherical()
+    morphoviewer.Viewer.viewWireframe()
+    morphoviewer.Viewer.viewSurfaceCurvature()
+    morphoviewer.Viewer.viewSurfaceOrientation()
+    morphoviewer.Viewer.calculateOrientation()
 
-`morphoviewer.viewSurfaceCurvature()` to color the surface accoring to the surface curvature for that polygon
+The surface orientation depends on where the current camera is. The orientation is calculated about the current
+camera forward normal. Therefore, `calculateOrientation()` needs to be called for the current camera orientation
+before calling `viewSurfaceOrientation`. An example of use might the following button:
 
-`morphoviewer.viewOrientation()` to color the surface according to the surface normal's XY orientation
+    <button onclick="viewer.calculateOrientation(); viewer.viewSurfaceOrientation();">orientation</button>
 
-`morphoviewer.viewIlluminated()` renders the object using a directional light and phong shading
-
-`morphoviewer.viewHemispherical()` renders the object using a hemispherical light
-
-###Changing the hemisphere orientation
-The illuminating hemisphere can be rotated by doing
-`morphoviewer.setLightPolarAngle( value )` where `value` is between 0 and PI, and
-`morphoviewer.setLightAzimuthalAngle( value )` where `value` is between 0 and 2*PI
+###Changing the lighting orientation
+The object is illuminated by a hemisphere. The hemisphere's orientation can be changed by calling the following methods:
+`morphoviewer.Viewer.setLightPolarAngle( value )` where `value` is between 0 and PI, and
+`morphoviewer.Viewer.setLightAzimuthalAngle( value )` where `value` is between 0 and 2*PI
 
 ##Changing the camera angle
-The following code will rotate the camera to a predefined view: `morphoviewer.viewLeft()`, `morphoviewer.viewRight()`,
-`morphoviewer.viewTop()`, `morphoviewer.viewBottom()`, `morphoviewer.viewFront()`, `morphoviewer.viewBack()`.
+The following code will rotate the camera to a predefined view:
+
+    morphoviewer.Viewer.viewLeft()
+    morphoviewer.Viewer.viewRight()
+    morphoviewer.Viewer.viewTop()
+    morphoviewer.Viewer.viewBottom()
+    morphoviewer.Viewer.viewFront()
+    morphoviewer.Viewer.viewBack()
 
