@@ -720,32 +720,6 @@ var morphoviewer = ( function( tools ) {
     }
 
     /**
-     * Set the directional light shader as the active shader.
-     * TODO: get rid of this lighting mode
-     * */
-    /*module.viewIlluminated = function() {
-        currentProgram = illuminationProgram;
-        currentProgram.use();
-
-        mesh.bind();
-        tools.directional.enableAttributes( gl, currentProgram );
-        tools.directional.setAttributes( gl, currentProgram, mesh.vertices() );
-        mesh.unbind();
-
-        renderFunctor = function() {
-            mesh.bind();
-            tools.directional.setAttributes( gl, currentProgram, mesh.vertices() );
-            tools.directional.camera = camera.matrix();
-            tools.directional.model = modelView;
-            tools.directional.cameraPosition = camera.getPosition();
-            tools.directional.setUniforms( currentProgram );
-
-            this.gl.drawArrays( gl.TRIANGLES, 0, mesh.vertices() );
-            mesh.unbind();
-        }
-    };*/
-
-    /**
      * View the model under a hemispherical light source.
      * */
     module.Viewer.prototype.viewHemispherical = function() {

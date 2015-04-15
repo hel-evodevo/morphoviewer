@@ -252,7 +252,7 @@ var morphoviewer = ( function( module ) {
      * normal: [], curvature: [], orientation: [] }
      * */
     module.Mesh.prototype.build = function( obj ) {
-        //TODO: throw error if vertices and normals are not included!
+
         var buf = [];
         if ( obj.vertex !== undefined ) {
             buf = obj.vertex.slice();
@@ -272,6 +272,8 @@ var morphoviewer = ( function( module ) {
             }
             buf = buf.concat( barycentric );
             this.contains["barycentric"] = true;
+        } else {
+            alert( "morphoviewer.Mesh.build error: no vertices supplied!" );
         }
         if ( obj.normal !== undefined ) {
             buf = buf.concat( obj.normal );

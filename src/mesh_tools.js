@@ -23,7 +23,6 @@ SOFTWARE.*/
  * for calculating vertex normals, triangulation, and calculating various surface properties.
  * */
 
-// TODO add orientation patch count algorithm
 var morphoviewer = ( function( module ) {
 
     function centerOfVolume( points ) {
