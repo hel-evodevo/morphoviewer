@@ -2,7 +2,7 @@
 
 ![Alt text](https://cdn.rawgit.com/Nelarius/Morphoviewer/master/images/toothbanner.png "Akodon serrensis")
 
-##What is this?
+##What is it?
 
 This library is intended for viewing the geometry, wire frame, surface orientation, and surface curvature, of a
 3d object, in a web browser. The code uses WebGL and HTML canvas elements to handle rendering.
