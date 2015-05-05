@@ -258,17 +258,8 @@ var morphoviewer = ( function( module ) {
         return norms;
     }
 
-    /**
-     * Calculates the per-vertex normal for each vertex in an array list. This operation
-     * has O(N) time complexity.
-     *
-     * @param {Array} verts an array of triplets, where each triplet represents a coordinate
-     * @param {Array} ind an array of triplets, where each triplet represents a triangle (three indices into vertex array)
-     * @returns {Array} an array which matches a vertex array with each vertex given in the input array.
-     */
-    module.vertexNormals = function( verts, ind ) {
-        /*construct adjacency list*/
-        var adjacency = new Array( verts.length );	//store neighboring points
+    module.adjacencyList = function( verts, ind ) {
+        var adjacency = new Array( verts.length );
         for ( var i = 0; i < verts.length; i++ ) {
             adjacency[i] = [];
         }
@@ -277,6 +268,29 @@ var morphoviewer = ( function( module ) {
             adjacency[ ind[i][1] ].push( ind[i][0], ind[i][2] );
             adjacency[ ind[i][2] ].push( ind[i][0], ind[i][1] );
         }
+
+        return adjacency;
+    };
+
+    /**
+     * Calculates the per-vertex normal for each vertex in an array list. This operation
+     * has O(N) time complexity.
+     *
+     * @param {Array} verts an array of triplets, where each triplet represents a coordinate
+     * @param {Array} ind an array of triplets, where each triplet represents a triangle (three indices into vertex array)
+     * @returns {Array} an array which matches a vertex array with each vertex given in the input array.
+     */
+    module.vertexNormals = function( verts, ind, adjacency ) {
+        /*construct adjacency list*/
+        /*var adjacency = new Array( verts.length );	//store neighboring points
+        for ( var i = 0; i < verts.length; i++ ) {
+            adjacency[i] = [];
+        }
+        for ( var i = 0; i < ind.length; i++ ) {
+            adjacency[ ind[i][0] ].push( ind[i][1], ind[i][2] );
+            adjacency[ ind[i][1] ].push( ind[i][0], ind[i][2] );
+            adjacency[ ind[i][2] ].push( ind[i][0], ind[i][1] );
+        }*/
 
         var faceVecs = faceVectors( verts, ind );
         var norms = new Array( verts.length );
@@ -403,7 +417,7 @@ var morphoviewer = ( function( module ) {
         var n = 8;	//the number of orientations we are going to consider
         for ( var i = 0; i < norms.length; i += 3 ) {
             var or = vec2.normalize( vec2.create(), vec2.fromValues( norms[i], norms[i+1]) );
-            var theta = angleRangeClamp( Math.atan2( or[1], or[0] ) );
+            var theta = module.angleRangeClamp( Math.atan2( or[1], or[0] ) );
             var region = Math.floor( theta / ( 2.0 * Math.PI / n) );	//find the region number in [1, n]
 
             region /= n-1;	//normalize!
@@ -427,7 +441,7 @@ var morphoviewer = ( function( module ) {
             var v1 = mat[0]*norms[i] + mat[1]*norms[i+1] + mat[2]*norms[i+2];
             var v2 = mat[3]*norms[i] + mat[4]*norms[i+1] + mat[3]*norms[i+2];
             var or = vec2.normalize( vec2.create(), vec2.fromValues(v1, v2) );
-            var theta = angleRangeClamp( Math.atan2( or[1], or[0] ) );
+            var theta = module.angleRangeClamp( Math.atan2( or[1], or[0] ) );
             var region = Math.floor( theta / ( 2.0 * Math.PI / n) );
 
             region /= n-1;
@@ -436,14 +450,64 @@ var morphoviewer = ( function( module ) {
         return regions;
     };
 
-    function angleRangeClamp( angle ) {
+    module.opc = function( verts, adjacency, orientation ) {
+        var explored = [];
+        for ( var i = 0; i < verts.length; i++ ) {
+            explored.push( false );
+        }
+        var stack = [];
+        var count = 0;
+
+        var explore = function explr( verts, adjacency, orientation, index ) {
+            var recursion = [];
+            recursion.push( index );
+            do {
+                var k = recursion.pop();
+                explored[k] = true;
+                for (var n = 0; n < adjacency[k].length; n++) {
+                    var neighbor = adjacency[k][n];
+                    /*
+                     * If we haven't already visited the vertex, then
+                     * */
+                    if (!explored[neighbor]) {
+                        /*
+                         * Check to see if it has the same orientation. If it doesn't,
+                         * */
+                        if (orientation[neighbor] === orientation[k]) {
+                            recursion.push( neighbor );
+                        }
+                        /*
+                         * then, stick it into the neighbor stack.
+                         * */
+                        else {
+                            stack.push( neighbor );   //captured from outside
+                        }
+                    }
+                }
+            } while( recursion.length != 0 );
+        };
+
+        stack.push(0);
+
+        do {
+            var i = stack.pop();
+            if ( !explored[i] ) {
+                explore( verts, adjacency, orientation, i );
+                count += 1;
+            }
+        } while( stack.length != 0 );
+
+        return count;
+    };
+
+    module.angleRangeClamp = function( angle ) {
         if ( angle > Math.PI * 2.0 ) {
             return angle - Math.PI * 2.0;
         } else if ( angle < 0.0 ) {
             return angle + Math.PI * 2.0;
         }
         return angle;
-    }
+    };
 
     return module;
 }( morphoviewer || {} ) );

@@ -350,7 +350,15 @@ var morphoviewer = ( function( tools ) {
                 var curvature = tools.surfaceVariation( verts, norms );
                 var orientation = tools.surfaceOrientation( norms );
                 tools.centerPointCloud( verts, "unwrapped" );
-                self.meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
+                self.meshCache = {
+                    vertex: [],
+                    normal: [],
+                    orientation: [],
+                    curvature: [],
+                    wrappedVertex: [],
+                    wrappedNormal: [],
+                    adjacencyList: []
+                };
                 self.meshCache.vertex = verts;
                 self.meshCache.normal = norms;
                 self.meshCache.orientation = orientation;
@@ -385,6 +393,8 @@ var morphoviewer = ( function( tools ) {
                     tris.push( vertex_indices[i] );
                 }
 
+                var adjacency = tools.adjacencyList( verts, tris );
+
                 var norms = [];
                 if ( vertex["nx"] !== undefined ) {
                     var nx = vertex["nx"];
@@ -394,7 +404,7 @@ var morphoviewer = ( function( tools ) {
                         norms.push( [ nx[i], ny[i], nz[i] ] );
                     }
                 } else {
-                    norms = tools.vertexNormals( verts, tris );
+                    norms = tools.vertexNormals( verts, tris, adjacency );
                 }
 
                 var orientation = [];
@@ -415,9 +425,20 @@ var morphoviewer = ( function( tools ) {
                 tools.centerPointCloud( verts );
                 var verts_unwrapped = tools.unwrapVectorArray( verts, tris );
                 var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
-                self.meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
+                self.meshCache = {
+                    vertex: [],
+                    normal: [],
+                    orientation: [],
+                    curvature: [],
+                    wrappedVertex: [],
+                    wrappedNormal: [],
+                    adjacencyList: []
+                };
                 self.meshCache.vertex = verts_unwrapped;
                 self.meshCache.normal = norms_unwrapped;
+                self.meshCache.wrappedVertex = verts;
+                self.meshCache.wrappedNormal = norms;
+                self.meshCache.adjacencyList = adjacency;
 
                 var meshObj = {
                     vertex: verts_unwrapped,
@@ -442,17 +463,29 @@ var morphoviewer = ( function( tools ) {
                 var verts = model["points"];
                 tools.centerPointCloud( verts );
                 var tris = tools.triangulate( verts );
-                var norms = tools.vertexNormals( verts, tris );
+                var adjacency = tools.adjacencyList( verts, tris );
+                var norms = tools.vertexNormals( verts, tris, adjacency );
 
                 var verts_unwrapped = tools.unwrapVectorArray( verts, tris );
                 var norms_unwrapped = tools.unwrapVectorArray( norms, tris );
                 var curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
                 var orientation = tools.surfaceOrientation( norms_unwrapped );
-                self.meshCache = { vertex: [], normal: [], orientation: [], curvature: [] };
+                self.meshCache = {
+                    vertex: [],
+                    normal: [],
+                    orientation: [],
+                    curvature: [],
+                    wrappedVertex: [],
+                    wrappedNormal: [],
+                    adjacencyList: []
+                };
                 self.meshCache.vertex = verts_unwrapped;
                 self.meshCache.normal = norms_unwrapped;
                 self.meshCache.orientation = orientation;
                 self.meshCache.curvature = curvature;
+                self.meshCache.wrappedVertex = verts;
+                self.meshCache.wrappedNormal = norms;
+                self.meshCache.adjacencyList = adjacency;
                 self.mesh = new tools.Mesh( self.gl );
                 self.mesh.build( {
                     vertex: verts_unwrapped,
@@ -845,6 +878,29 @@ var morphoviewer = ( function( tools ) {
         this.meshCache.orientation = tools.surfaceOrientationAboutCamera( this.meshCache.normal, this.camera.rotation() );
         this.mesh = new tools.Mesh( this.gl );
         this.mesh.build( this.meshCache );
+    };
+
+    module.Viewer.prototype.opc = function() {
+        if ( this.meshCache.wrappedVertex.length === 0 ) {
+            console.log("The file format (STL) does not support orientation patch count calculations.");
+            console.log("Consider converting the file into something else!");
+            return 0;
+        }
+        // calculate the wrapped orientation values
+        var norms = this.meshCache.wrappedNormal;
+        var orientation = [];
+        var n = 8;
+        for ( var i = 0; i < norms.length; i++ ) {
+            var or = vec2.normalize( vec2.create(), vec2.fromValues( norms[i][0], norms[i][1]) );
+            var theta = tools.angleRangeClamp( Math.atan2( or[1], or[0] ) );
+            var region = Math.floor( theta / ( 2.0 * Math.PI / n) );	//find the region number in [1, n]
+
+            region /= n-1;	//normalize!
+            orientation.push( region );
+        }
+
+        return tools.opc( this.meshCache.wrappedVertex, this.meshCache.adjacencyList, orientation );
+        //return 128;
     };
 
     //re-export the io namespace
