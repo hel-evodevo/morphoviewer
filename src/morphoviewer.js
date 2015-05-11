@@ -882,16 +882,18 @@ var morphoviewer = ( function( tools ) {
 
     module.Viewer.prototype.opc = function() {
         if ( this.meshCache.wrappedVertex.length === 0 ) {
-            console.log("The file format (STL) does not support orientation patch count calculations.");
-            console.log("Consider converting the file into something else!");
+            alert("The file format (STL) does not support orientation patch count calculations. Consider converting the file into something else!");
             return 0;
         }
         // calculate the wrapped orientation values
+        var mat = this.camera.rotation();
         var norms = this.meshCache.wrappedNormal;
         var orientation = [];
         var n = 8;
         for ( var i = 0; i < norms.length; i++ ) {
-            var or = vec2.normalize( vec2.create(), vec2.fromValues( norms[i][0], norms[i][1]) );
+            var v1 = mat[0]*norms[i][0] + mat[1]*norms[i][1] + mat[2]*norms[i][2];
+            var v2 = mat[3]*norms[i][0] + mat[4]*norms[i][1] + mat[3]*norms[i][2];
+            var or = vec2.normalize( vec2.create(), vec2.fromValues(v1, v2) );
             var theta = tools.angleRangeClamp( Math.atan2( or[1], or[0] ) );
             var region = Math.floor( theta / ( 2.0 * Math.PI / n) );	//find the region number in [1, n]
 
@@ -899,8 +901,7 @@ var morphoviewer = ( function( tools ) {
             orientation.push( region );
         }
 
-        return tools.opc( this.meshCache.wrappedVertex, this.meshCache.adjacencyList, orientation );
-        //return 128;
+        return count = tools.opc( this.meshCache.wrappedVertex, this.meshCache.adjacencyList, orientation );
     };
 
     //re-export the io namespace
