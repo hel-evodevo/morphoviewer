@@ -61,6 +61,8 @@ var morphoviewer = ( function( tools ) {
          * */
         this.meshCache = { vertex: [], normal: [], curvature: [], orientation: [] };
 
+        this.opcAreaLimit = 100.0;
+
         /*
          * This is for storing the mouse's current and previous coordinates. Used in tracking mouse
          * motion deltas.
@@ -353,6 +355,7 @@ var morphoviewer = ( function( tools ) {
                 self.meshCache = {
                     vertex: [],
                     normal: [],
+                    index: [],
                     orientation: [],
                     curvature: [],
                     wrappedVertex: [],
@@ -428,6 +431,7 @@ var morphoviewer = ( function( tools ) {
                 self.meshCache = {
                     vertex: [],
                     normal: [],
+                    index: [],
                     orientation: [],
                     curvature: [],
                     wrappedVertex: [],
@@ -436,6 +440,7 @@ var morphoviewer = ( function( tools ) {
                 };
                 self.meshCache.vertex = verts_unwrapped;
                 self.meshCache.normal = norms_unwrapped;
+                self.meshCache.index = tris;
                 self.meshCache.wrappedVertex = verts;
                 self.meshCache.wrappedNormal = norms;
                 self.meshCache.adjacencyList = adjacency;
@@ -473,6 +478,7 @@ var morphoviewer = ( function( tools ) {
                 self.meshCache = {
                     vertex: [],
                     normal: [],
+                    index: [],
                     orientation: [],
                     curvature: [],
                     wrappedVertex: [],
@@ -481,6 +487,7 @@ var morphoviewer = ( function( tools ) {
                 };
                 self.meshCache.vertex = verts_unwrapped;
                 self.meshCache.normal = norms_unwrapped;
+                self.meshCache.index = tris;
                 self.meshCache.orientation = orientation;
                 self.meshCache.curvature = curvature;
                 self.meshCache.wrappedVertex = verts;
@@ -880,6 +887,14 @@ var morphoviewer = ( function( tools ) {
         this.mesh.build( this.meshCache );
     };
 
+    module.Viewer.prototype.setAreaLimit = function( area ) {
+        if ( area > 0.0 ) {
+            this.opcAreaLimit = area;
+        } else {
+            console.log( "Viewer.setAreaLimit: Negative area!" );
+        }
+    };
+
     module.Viewer.prototype.opc = function() {
         if ( this.meshCache.wrappedVertex.length === 0 ) {
             alert("The file format (STL) does not support orientation patch count calculations. Consider converting the file into something else!");
@@ -901,7 +916,7 @@ var morphoviewer = ( function( tools ) {
             orientation.push( region );
         }
 
-        return count = tools.opc( this.meshCache.wrappedVertex, this.meshCache.adjacencyList, orientation );
+        return count = tools.opc( this.meshCache.wrappedVertex, this.meshCache.adjacencyList, orientation, this.opcAreaLimit );
     };
 
     //re-export the io namespace

@@ -450,7 +450,7 @@ var morphoviewer = ( function( module ) {
         return regions;
     };
 
-    module.opc = function( verts, adjacency, orientation ) {
+    module.opc = function( verts, adjacency, orientation, lowerLimit ) {
         var explored = [];
         for ( var i = 0; i < verts.length; i++ ) {
             explored.push( false );
@@ -460,9 +460,12 @@ var morphoviewer = ( function( module ) {
 
         var explore = function explr( verts, adjacency, orientation, index ) {
             var recursion = [];
+            var size = 0;
             recursion.push( index );
             do {
                 var k = recursion.pop();
+                a = null;
+                b = null;
                 explored[k] = true;
                 for (var n = 0; n < adjacency[k].length; n++) {
                     var neighbor = adjacency[k][n];
@@ -471,13 +474,30 @@ var morphoviewer = ( function( module ) {
                      * */
                     if (!explored[neighbor]) {
                         /*
-                         * Check to see if it has the same orientation. If it doesn't,
+                         * Check to see if it has the same orientation. If it does, get the surface area of the
+                         * formed triangle, and add that to the size accumulator.
+                         *
+                         * If it doesn't,
                          * */
                         if (orientation[neighbor] === orientation[k]) {
+                            b = a;
+                            a = [
+                                verts[n][0] - verts[k][0],
+                                verts[n][1] - verts[k][2],
+                                verts[n][1] - verts[k][2]
+                            ];
+                            if ( a && b ) {
+                                var r = [
+                                    a[1]*b[2] - a[2]*b[1],
+                                    a[2]*b[0] - a[0]*b[2],
+                                    a[0]*b[1] - a[1]*b[0]
+                                ];
+                                size += Math.sqrt( r[0]*r[0] + r[1]*r[1] + r[2]*r[2] );
+                            }
                             recursion.push( neighbor );
                         }
                         /*
-                         * then, stick it into the neighbor stack.
+                         * then, stick it into the neighboring patch stack.
                          * */
                         else {
                             stack.push( neighbor );   //captured from outside
@@ -485,15 +505,17 @@ var morphoviewer = ( function( module ) {
                     }
                 }
             } while( recursion.length != 0 );
+            return size;
         };
 
         stack.push(0);
-
         do {
             var i = stack.pop();
             if ( !explored[i] ) {
-                explore( verts, adjacency, orientation, i );
-                count += 1;
+                var size = explore( verts, adjacency, orientation, i );
+                if ( size > lowerLimit ) {
+                    count += 1;
+                }
             }
         } while( stack.length != 0 );
 
