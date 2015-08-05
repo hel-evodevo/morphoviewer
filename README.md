@@ -22,7 +22,7 @@ Just include the minified javascript source file from the `distribution` folder 
 
 We need to create an HTML canvas element, and then create an instance of `morphoviewer.Viewer` which will take over ownership of the canvas element. Let's start with a minimal example:
 
-```js, html
+```html
 <html>
 <head>
   <meta charset="UTF-8">
@@ -76,7 +76,7 @@ viewer.viewPerspective();  // perspective projection is now used
 
 When rendering using perspective projection, hte vertical field-of-view (FOV) can be changed by calling `viewer.setFov( value )`, where value should be given in degrees. For instance, an input slider controlling the vertical FOV with reasonable inputs would be written like
 
-```js, html
+```html
 <input id="fov" type="range" min="0.1" max="100" step="0.1" value="67" oninput="viewer.setFOV(this.value)">
 ```
 
@@ -84,13 +84,13 @@ When rendering using perspective projection, hte vertical field-of-view (FOV) ca
 
 The 3d model is viewed with hemispherical lighting by default. The hemispherical light is situated on the surface of a sphere, and you can control it's orientation by changing the polar and azimuthal angles, via two function calls. Here's how you would create two input sliders to contorl the orientation:
 
-```js, html
+```html
 <input id="polar" type="range" min="0.1" max="3.14" step="0.1" value="1.57" oninput="viewer.setLightPolarAngle(this.value)">
 <input id="azimuth" type="range" min="0.1" max="6.283" step="0.1" value="0" oninput="viewer.setLightAzimuthalAngle(this.value)">
 ```
 
 There are other shading modes available as well. As an example, here's how you would create a set of buttons to change the shading mode.
-```js, html
+```html
 <button onclick="viewer.viewWireframe()">wireframe</button>
 <button onclick="viewer.viewSurfaceCurvature();">curvature</button>
 <button onclick="viewer.calculateOrientation(); viewer.viewSurfaceOrientation();">orientation</button>
@@ -104,7 +104,7 @@ The surface curvature plots the amount of local curvature on the surface.
 
 By default, the `viewer` instance displays a tracking ball around the 3d model. The tracking ball can be shown and hidden by calling `viewer.showTrackingball()` and `viewer.hideTrackingball()`, respectively. Here's how you could write a toggle button script.
 
-```js, html
+```html
 <script type="text/javascript">
   function toggle() {
     var element = document.getElementById("togglebutton");       
