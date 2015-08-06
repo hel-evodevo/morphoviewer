@@ -84,7 +84,7 @@ When rendering using perspective projection, hte vertical field-of-view (FOV) ca
 
 The 3d model is viewed with hemispherical lighting by default. The hemispherical light is situated on the surface of a sphere, and you can control it's orientation by changing the polar and azimuthal angles, via two function calls. Here's how you would create two input sliders to contorl the orientation:
 
-```js, html
+```html
 <input id="polar" type="range" min="0.1" max="3.14" step="0.1" value="1.57" oninput="viewer.setLightPolarAngle(this.value)">
 <input id="azimuth" type="range" min="0.1" max="6.283" step="0.1" value="0" oninput="viewer.setLightAzimuthalAngle(this.value)">
 ```
