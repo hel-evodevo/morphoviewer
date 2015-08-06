@@ -84,7 +84,7 @@ When rendering using perspective projection, hte vertical field-of-view (FOV) ca
 
 The 3d model is viewed with hemispherical lighting by default. The hemispherical light is situated on the surface of a sphere, and you can control it's orientation by changing the polar and azimuthal angles, via two function calls. Here's how you would create two input sliders to contorl the orientation:
 
-```html
+```js, html
 <input id="polar" type="range" min="0.1" max="3.14" step="0.1" value="1.57" oninput="viewer.setLightPolarAngle(this.value)">
 <input id="azimuth" type="range" min="0.1" max="6.283" step="0.1" value="0" oninput="viewer.setLightAzimuthalAngle(this.value)">
 ```
@@ -122,9 +122,35 @@ By default, the `viewer` instance displays a tracking ball around the 3d model. 
 
 #### Calculating the orientation patch count (OPC)
 
+Morphoviewer can be used to calculate the OPC. It will be calculated based on the surface orientation data that was last obtained by calling `morphoviewer.Viewer.calculateOrientation`. The OPC is obtained by calling the `opc()` function  on the `viewer` instance. The function returns a number corresponding to the patch count.
+
+Here's how you would implement a button and text area to display the OPC:
+```html
+<script>
+    function opc() {
+        var count = viewer.opc();
+        document.getElementById("opc").innerHTML = "The OPC is " + count;
+    }
+</script>
+
+<button onclick="opc()">calculate OPC</button>
+<br/>
+<em id="opc"></em>
+```
+
+Counting the patches has Nlog(N) time complexity, where N is the number of vertices.
+
+Sometimes it's not desirable for all patches to be counted. A database may contain mesh models of many different resolutions, for example. You can set a lower limit, under which the patches will not be counted. The lower limit is the percentage of surface area of the total model surface area.
+
+## Orientation
+
+`morphoviewer.Viewer.calculateOrientation()` calculates the orientation of each vertex. The orientation takes 8 discrete values, corresponding to the 8 cardinal directions. The orientation is always calculated in the plane perpendicular to the camera. In this way, the orientation of the surface can be calculated independently of the model orientation.
+
+For any given mesh, some adjacent vertices will have the same orientation. These vertices form orientation patches. The number of such patches is contained in the OPC.
+
 ## Accepted file types
 
-The 3d file formats that `moprhoviewer.Viewer.view` accepts are PLY, STL and OBJ files.
+The 3d file formats that `moprhoviewer.Viewer.view()` accepts are PLY, STL and OBJ files.
 
 #### PLY support
 
