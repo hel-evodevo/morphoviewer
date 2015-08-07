@@ -140,7 +140,22 @@ Here's how you would implement a button and text area to display the OPC:
 
 Counting the patches has Nlog(N) time complexity, where N is the number of vertices.
 
-Sometimes it's not desirable for all patches to be counted. A database may contain mesh models of many different resolutions, for example. You can set a lower limit, under which the patches will not be counted. The lower limit is the percentage of surface area of the total model surface area.
+Sometimes it's not desirable for all patches to be counted. A database may contain mesh models of many different resolutions, for example. You can set a lower limit, under which the patches will not be counted. The lower limit is the ratio of patch surface area to total model surface area. Here's how you would set the limit:
+
+```html
+<script>
+    function limit( value ) {
+		    viewer.setPatchCutoff( value );
+		    document.getElementById("limit").innerHTML = value;
+		}
+</script>
+<p>Set the lower limit of patch size to be taken into the orientation patch count. Values range from 0 to 3.</p>
+<input id="area" type="range" min="0.0" max="3.0" step="0.02" value="0.1" oninput="limit(this.value)">
+<br />
+<em id="limit">area</em>
+```
+
+Good patch limit values are in the range 0..1 %.
 
 ## Orientation
 
