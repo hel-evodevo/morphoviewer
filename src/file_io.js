@@ -281,8 +281,6 @@ var morphoviewer = ( function( module ) {
         this.propertyParsers = [];
     };
 
-    /**
-     * */
     PLYElementParser.prototype.parseElement = function() {
         for ( var i = 0; i < this.count; i++ ) {
             for ( var j = 0; j < this.propertyParsers.length; j++ ) {

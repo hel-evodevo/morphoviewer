@@ -450,7 +450,36 @@ var morphoviewer = ( function( module ) {
         return regions;
     };
 
-    module.opc = function( verts, adjacency, orientation, lowerLimit ) {
+    /*
+    * This takes wrapped vertices as an argument
+    * */
+    module.modelArea = function( verts, tris ) {
+        var size = 0.0;
+        /*
+        * The area is calculated exactly the same way as below, in opc()
+        * */
+        for ( var i = 0; i < tris.length; i++ ) {
+            var a = [
+                verts[tris[i][0]][0] - verts[tris[i][1]][0],
+                verts[tris[i][0]][1] - verts[tris[i][1]][1],
+                verts[tris[i][0]][2] - verts[tris[i][1]][2]
+            ];
+            var b = [
+                verts[tris[i][0]][0] - verts[tris[i][2]][0],
+                verts[tris[i][0]][1] - verts[tris[i][2]][1],
+                verts[tris[i][0]][2] - verts[tris[i][2]][2]
+            ];
+            var r = [
+                a[1]*b[2] - a[2]*b[1],
+                a[2]*b[0] - a[0]*b[2],
+                a[0]*b[1] - a[1]*b[0]
+            ];
+            size += Math.sqrt( r[0]*r[0] + r[1]*r[1] + r[2]*r[2] );
+        }
+        return size;
+    };
+
+    module.opc = function( verts, adjacency, orientation, lowerPercentage, totalArea ) {
         var explored = [];
         for ( var i = 0; i < verts.length; i++ ) {
             explored.push( false );
@@ -513,7 +542,9 @@ var morphoviewer = ( function( module ) {
             var i = stack.pop();
             if ( !explored[i] ) {
                 var size = explore( verts, adjacency, orientation, i );
-                if ( size > lowerLimit ) {
+                // normalize the size so that it is a percentage
+                size /= totalArea;
+                if ( size > lowerPercentage ) {
                     count += 1;
                 }
             }

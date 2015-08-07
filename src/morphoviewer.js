@@ -61,7 +61,8 @@ var morphoviewer = ( function( tools ) {
          * */
         this.meshCache = { vertex: [], normal: [], curvature: [], orientation: [] };
 
-        this.opcAreaLimit = 100.0;
+        this.opcAreaLimit = 0.3;  // this is a percentage
+        this.totalModelArea = 1.0;
 
         /*
          * This is for storing the mouse's current and previous coordinates. Used in tracking mouse
@@ -508,6 +509,9 @@ var morphoviewer = ( function( tools ) {
                 alert("morphoviewer.Viewer.view: unrecognized file format" );
                 return;
             }
+
+            self.totalModelArea = tools.modelArea( self.meshCache.wrappedVertex, self.meshCache.index );
+            console.log( "total model area: " + self.totalModelArea );
         };
         tools.io.loadFile( file, loader );
     };
@@ -887,11 +891,16 @@ var morphoviewer = ( function( tools ) {
         this.mesh.build( this.meshCache );
     };
 
-    module.Viewer.prototype.setAreaLimit = function( area ) {
-        if ( area > 0.0 ) {
-            this.opcAreaLimit = area;
+    /**
+     * @brief Set a lower limit for patch size for it to be counted
+     * @param percentage {Number} the patch's percentage of the total area, below which it will not be counted
+     * */
+    module.Viewer.prototype.setPatchCutoff = function( percentage )  {
+        console.log("Setting area limit: " + percentage );
+        if ( percentage >= 0.0 && percentage < 100.0 ) {
+            this.opcAreaLimit = percentage;
         } else {
-            console.log( "Viewer.setAreaLimit: Negative area!" );
+            console.log( "Viewer.setAreaLimit: invalid percentage " + percentage );
         }
     };
 
@@ -916,7 +925,13 @@ var morphoviewer = ( function( tools ) {
             orientation.push( region );
         }
 
-        return count = tools.opc( this.meshCache.wrappedVertex, this.meshCache.adjacencyList, orientation, this.opcAreaLimit );
+        return count = tools.opc(
+            this.meshCache.wrappedVertex,
+            this.meshCache.adjacencyList,
+            orientation,
+            this.opcAreaLimit,
+            this.totalModelArea
+        );
     };
 
     //re-export the io namespace
