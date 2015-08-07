@@ -511,7 +511,6 @@ var morphoviewer = ( function( tools ) {
             }
 
             self.totalModelArea = tools.modelArea( self.meshCache.wrappedVertex, self.meshCache.index );
-            console.log( "total model area: " + self.totalModelArea );
         };
         tools.io.loadFile( file, loader );
     };
@@ -896,7 +895,6 @@ var morphoviewer = ( function( tools ) {
      * @param percentage {Number} the patch's percentage of the total area, below which it will not be counted
      * */
     module.Viewer.prototype.setPatchCutoff = function( percentage )  {
-        console.log("Setting area limit: " + percentage );
         if ( percentage >= 0.0 && percentage < 100.0 ) {
             this.opcAreaLimit = percentage;
         } else {
