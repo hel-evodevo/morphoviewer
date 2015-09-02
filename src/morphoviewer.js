@@ -1,28 +1,4 @@
 
-/*
-Copyright (c) 2014 Johann Muszynski
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.*/
-
-/**
- * @namespace The morphoviewer namespace contains functions for viewing and manipulating
- * morphological data from voxel data files, or point cloud data files.
- */
-
 var morphoviewer = ( function( tools ) {
 
     //the library's public interface goes here
@@ -446,21 +422,26 @@ var morphoviewer = ( function( tools ) {
                 self.meshCache.wrappedNormal = norms;
                 self.meshCache.adjacencyList = adjacency;
 
-                var meshObj = {
-                    vertex: verts_unwrapped,
-                    normal: norms_unwrapped
-                };
                 //if curvature & orientation were supplied, then add them to the object
+                // else compute them!
                 if ( vertex["orientation"] !== undefined ) {
-                    meshObj.orientation = tools.unwrapArray( orientation, tris );
-                    self.meshCache.orientation = meshObj.orientation;
+                    self.meshCache.orientation = tools.unwrapArray( orientation, tris );
+                } else {
+                    self.meshCache.orientation = tools.surfaceOrientation( norms_unwrapped );
                 }
                 if ( model["face"]["curvature"] !== undefined ) {
-                    meshObj.curvature = curvature;
                     self.meshCache.curvature = curvature;
+                } else {
+                    self.meshCache.curvature = tools.surfaceVariation( verts_unwrapped, norms_unwrapped );
                 }
+
                 self.mesh = new tools.Mesh( self.gl );
-                self.mesh.build( meshObj );
+                self.mesh.build( {
+                    vertex: verts_unwrapped,
+                    normal: norms_unwrapped,
+                    curvature: self.meshCache.curvature,
+                    orientation: self.meshCache.orientation
+                } );
                 var aabb = tools.getAabb( verts );
                 self.trackball.setRadius( aabb.length / 2.3 );
                 self.camera.setBestPositionForModel( aabb );

@@ -1,24 +1,4 @@
 
-/*
-Copyright (c) 2014 Johann Muszynski
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.*/
-
-
 /**
  * This file adds graphical utilities to the morphoviewer namespace.
  * */
@@ -252,7 +232,7 @@ var morphoviewer = ( function( module ) {
      * normal: [], curvature: [], orientation: [] }
      * */
     module.Mesh.prototype.build = function( obj ) {
-
+        var N = obj.vertex.length;
         var buf = [];
         if ( obj.vertex !== undefined ) {
             buf = obj.vertex.slice();
@@ -824,20 +804,12 @@ var morphoviewer = ( function( module ) {
         setAttributes: function( gl, program, numVertices, mesh ) {
             gl.vertexAttribPointer( program.attribute( "vert" ),
                 3, gl.FLOAT, false, 0, 0 );
-            //between color and vert there is norm and barycentric
-            if ( mesh.has( "curvature" ) ) {
-                gl.vertexAttribPointer(program.attribute("curvature"),
-                    1, gl.FLOAT, false, 0, 36 * numVertices);
-            }
-            if ( mesh.has( "orientation" ) ) {
-                if ( mesh.has("curvature") ) {
-                    gl.vertexAttribPointer( program.attribute( "orientation"),
-                        1, gl.FLOAT, false, 0, 40 * numVertices );
-                }
-                else {
-                    gl.vertexAttribPointer( program.attribute( "orientation"),
-                        1, gl.FLOAT, false, 0, 36 * numVertices );
-                }
+
+            if ( mesh.has( "curvature" ) && mesh.has( "orientation" ) ) {
+                gl.vertexAttribPointer( program.attribute( "curvature" ),
+                    1, gl.FLOAT, gl.FALSE, 0, 36 * numVertices );
+                gl.vertexAttribPointer( program.attribute( "orientation" ),
+                    1, gl.FLOAT, gl.FALSE, 0, 40 * numVertices );
             }
         },
         setUniforms: function( program ) {
