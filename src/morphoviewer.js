@@ -96,8 +96,8 @@ var morphoviewer = ( function( tools ) {
                     self.canvas.onmousemove = function( e ) {
                         onMouseMove( e );
                         self.camera.orbit(
-                            self.mouse.dx * 0.004,// * getTrackballDampeningFactor(),
-                            self.mouse.dy * 0.004// * getTrackballDampeningFactor()
+                            self.mouse.dx * 0.080,// * getTrackballDampeningFactor(),
+                            self.mouse.dy * 0.080// * getTrackballDampeningFactor()
                         );
                     };
                     break;

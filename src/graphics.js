@@ -324,12 +324,12 @@ var morphoviewer = ( function( module ) {
      * @param {Number} far the distance of the far plane from the camera
      */
     module.Camera = function( fov, ar, near, far ) {
-        //position
-        this.position = vec3.fromValues( 0.0, 0.0, 2.0 );
-        this.targetPosition = vec3.fromValues( 0.0, 0.0, 2.0 );
 
-        this.targetRadius = 2.0;
-        this.radius = 10.0;
+        this.targetRadius = 3.0;
+        this.radius = 3.0;
+
+        this.targetPosition = vec3.scale( vec3.create(), vec3.fromValues( 0.0, 0.0, 1.0 ) , this.radius );
+        this.position = vec3.scale( vec3.create(), vec3.fromValues( 0.0, 0.0, 1.0 ), this.radius );
 
         this.polar = Math.PI / 2.0;
         this.azimuth = 0.0;
@@ -441,6 +441,13 @@ var morphoviewer = ( function( module ) {
     };
 
     /**
+     *@returns {Number} the camera's distance from the origin
+     * */
+    module.Camera.prototype.distanceFromOrigin = function() {
+        return this.radius;
+    };
+
+    /**
      * Dolly along the Z axis of the camera's local transform
      */
     module.Camera.prototype.dolly = function( movez ) {
@@ -454,19 +461,14 @@ var morphoviewer = ( function( module ) {
      * Orbit about the focal point
      */
     module.Camera.prototype.orbit = function( movex, movey ) {
-        this.polar -= movey;
-        this.polar = clamp( this.polar, 0.01, Math.PI );
-        this.azimuth -= movex;
+        var dright = vec3.scale( vec3.create(), this.right(), -movex );
+        var dup = vec3.scale( vec3.create(), this.up(), movey );
+        vec3.add(
+            this.targetPosition,
+            this.targetPosition,
+            vec3.add( vec3.create(), dright, dup )
+        );
     };
-
-    function clamp( val, min, max ){
-        if ( val < min ) {
-            val = min;
-        } else if ( val > max ) {
-            val = max;
-        }
-        return val;
-    }
 
     /**
      * Rotate the camera about its local forward axis.
@@ -498,17 +500,8 @@ var morphoviewer = ( function( module ) {
         this.radius = lerp( this.radius, this.targetRadius, dt * 20 );
         this.sensitivity = 0.1 * this.radius;
 
-        var offset = vec3.fromValues(
-            Math.sin( this.polar ) * Math.sin( this.azimuth ),
-            Math.cos( this.polar ),
-            Math.sin( this.polar ) * Math.cos( this.azimuth )
-        );
-
-        this.targetPosition = vec3.scale(
-            vec3.create(),
-            offset,
-            this.radius
-        );
+        vec3.normalize( this.targetPosition, this.targetPosition );
+        vec3.scale( this.targetPosition, this.targetPosition, this.radius );
         vec3.lerp( this.position, this.position, this.targetPosition, dt * 20 );
 
         mat4.lookAt(
@@ -535,14 +528,14 @@ var morphoviewer = ( function( module ) {
      * @returns {vec3} the normalized vector pointing forward in the local coordinate system
      */
     module.Camera.prototype.forward = function() {
-        var norm = vec3.normalize( vec3.create(), this.position );
-        return vec3.fromValues( -norm[0], -norm[1], -norm[2] );
+        return vec3.normalize(
+            vec3.create(),
+            vec3.subtract( vec3.create(), vec3.fromValues( 0.0, 0.0, 0.0 ), this.position )
+        );
     };
 
     module.Camera.prototype.right = function() {
-        var x = this.radius * Math.sin( this.polar ) * Math.cos( this.azimuth );
-        var z = - this.radius * Math.sin( this.polar ) * Math.sin( this.azimuth );
-        return vec3.normalize( vec3.create(), vec3.fromValues( x, 0.0, z ) );
+        return vec3.cross( vec3.create(), this.forward(), vec3.fromValues( 0.0, 1.0, 0.0 ) );
     };
 
     module.Camera.prototype.up = function() {
@@ -550,39 +543,33 @@ var morphoviewer = ( function( module ) {
     };
 
     module.Camera.prototype.positionLeft = function() {
-        //this.rotation = 0.0;
-        this.polar = Math.PI / 2.0;
-        this.azimuth = Math.PI / 2.0;
+        this.targetPosition = vec3.fromValues( -1.0, 0.0, 0.0 );
+        vec3.scale( this.targetPosition, this.radius );
     };
 
     module.Camera.prototype.positionRight = function() {
-        //this.rotation = 0.0;
-        this.polar = Math.PI / 2.0;
-        this.azimuth = 3.0 * Math.PI / 2.0;
+        this.targetPosition = vec3.fromValues( 1.0, 0.0, 0.0 );
+        vec3.scale( this.targetPosition, this.radius );
     };
 
     module.Camera.prototype.positionTop = function() {
-        //this.rotation = 0.0;
-        this.polar = 0.001;
-        this.azimuth = 0.0;
+        this.targetPosition = vec3.fromValues( 0.0, 1.0, 0.0 );
+        vec3.scale( this.targetPosition, this.radius );
     };
 
     module.Camera.prototype.positionBottom = function() {
-        //this.rotation = 0.0;
-        this.polar = Math.PI;
-        this.azimuth = 0.0;
+        this.targetPosition = vec3.fromValues( 0.0, -1.0, 0.0 );
+        vec3.scale( this.targetPosition, this.radius );
     };
 
     module.Camera.prototype.positionFront = function() {
-        //this.rotation = 0.0;
-        this.polar = Math.PI / 2.0;
-        this.azimuth = 0.0;
+        this.targetPosition = vec3.fromValues( 0.0, 0.0, 1.0 );
+        vec3.scale( this.targetPosition, this.radius );
     };
 
     module.Camera.prototype.positionBack = function() {
-        //this.rotation = 0.0;
-        this.polar = Math.PI / 2.0;
-        this.azimuth = Math.PI;
+        this.targetPosition = vec3.fromValues( 0.0, 0.0, -1.0 );
+        vec3.scale( this.targetPosition, this.radius );
     };
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
