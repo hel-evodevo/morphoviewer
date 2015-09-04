@@ -409,22 +409,6 @@ var morphoviewer = ( function( module ) {
         return this.viewTransform;
     };
 
-    module.Camera.prototype.rotation = function() {
-        return mat3.multiply(
-            mat3.create(),
-            mat3FromAxisAngle( [0,0,1], this.azimuth ),
-            mat3FromAxisAngle( [1,0,0], 0.5*Math.PI - this.polar )
-        );
-    };
-
-    module.Camera.prototype.getPosition = function() {
-        return vec3.fromValues(
-            -this.position[0],
-            -this.position[1],
-            -this.position[2]
-        );
-    };
-
     /**
      * @param {Number} fov the vertical field of view, in radians
      */
@@ -500,22 +484,6 @@ var morphoviewer = ( function( module ) {
     function lerp( a, b, t ) {
         if ( t > 1 ) t = 1;
         return a + t * ( b - a );
-    }
-
-    /*Returns {mat3} rotation matrix corresponding to the rotation
-     * theta about the axis u.*/
-    function mat3FromAxisAngle( u, theta ) {
-        var r = mat3.create();
-        r[0] = Math.cos(theta) + u[0]*u[0] * (1.0 - Math.cos(theta) );
-        r[1] = u[0]*u[1] * (1.0 - Math.cos(theta)) - u[2]*Math.sin(theta);
-        r[2] = u[0]*u[2] * (1.0 - Math.cos(theta)) + u[1]*Math.sin(theta);
-        r[3] = u[1]*u[0] * (1.0 - Math.cos(theta)) + u[2]*Math.sin(theta);
-        r[4] = Math.cos(theta) + u[1]*u[1]*(1.0 - Math.cos(theta));
-        r[5] = u[1]*u[2] * (1.0 - Math.cos(theta)) - u[0]*Math.sin(theta);
-        r[6] = u[2]*u[0] * (1.0 - Math.cos(theta)) - u[1]*Math.sin(theta);
-        r[7] = u[2]*u[1] * (1.0 - Math.cos(theta)) + u[0]*Math.sin(theta);
-        r[8] = Math.cos(theta) + u[2]*u[2] * (1.0 - Math.cos(theta));
-        return r;
     }
 
     module.Camera.prototype.update = function( dt ) {
@@ -615,25 +583,6 @@ var morphoviewer = ( function( module ) {
         //this.rotation = 0.0;
         this.polar = Math.PI / 2.0;
         this.azimuth = Math.PI;
-    };
-
-    /**
-     *@returns {Number} the camera's distance from the origin
-     * */
-    module.Camera.prototype.distanceFromOrigin = function() {
-        return this.radius;
-    };
-
-    /**
-     * Returns the radius of the largest possible sphere that, when placed at the origin,
-     * will be entirely visible, given this vertical field of view.
-     * */
-    module.Camera.prototype.getMaxSphereRadius = function() {
-        if ( this.viewPerspective ) {
-            return this.radius * Math.tan(0.5 * this.verticalFOV);
-        } else {
-            return lerp( this.nearPlane, this.farPlane, 0.01 * this.zoomFactor );
-        }
     };
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
