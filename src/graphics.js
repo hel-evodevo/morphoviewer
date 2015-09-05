@@ -535,7 +535,10 @@ var morphoviewer = ( function( module ) {
     };
 
     module.Camera.prototype.right = function() {
-        return vec3.cross( vec3.create(), this.forward(), vec3.fromValues( 0.0, 1.0, 0.0 ) );
+        return vec3.normalize(
+            vec3.create(),
+            vec3.cross( vec3.create(), this.forward(), vec3.fromValues( 0.0, 1.0, 0.0 ) )
+        );
     };
 
     module.Camera.prototype.up = function() {
