@@ -547,32 +547,26 @@ var morphoviewer = ( function( module ) {
 
     module.Camera.prototype.positionLeft = function() {
         this.targetPosition = vec3.fromValues( -1.0, 0.0, 0.0 );
-        vec3.scale( this.targetPosition, this.radius );
     };
 
     module.Camera.prototype.positionRight = function() {
         this.targetPosition = vec3.fromValues( 1.0, 0.0, 0.0 );
-        vec3.scale( this.targetPosition, this.radius );
     };
 
     module.Camera.prototype.positionTop = function() {
         this.targetPosition = vec3.fromValues( 0.0, 1.0, 0.0 );
-        vec3.scale( this.targetPosition, this.radius );
     };
 
     module.Camera.prototype.positionBottom = function() {
         this.targetPosition = vec3.fromValues( 0.0, -1.0, 0.0 );
-        vec3.scale( this.targetPosition, this.radius );
     };
 
     module.Camera.prototype.positionFront = function() {
         this.targetPosition = vec3.fromValues( 0.0, 0.0, 1.0 );
-        vec3.scale( this.targetPosition, this.radius );
     };
 
     module.Camera.prototype.positionBack = function() {
         this.targetPosition = vec3.fromValues( 0.0, 0.0, -1.0 );
-        vec3.scale( this.targetPosition, this.radius );
     };
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
