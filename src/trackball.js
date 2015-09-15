@@ -103,38 +103,38 @@ var morphoviewer = ( function( module ) {
 
     module.Trackball.prototype.drawXYCircle = function( shader ) {
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, this.vboxy );
-        module.lineShader.setAttributes( this.gl, shader );
+        module.flatShader.setAttributes( this.gl, shader );
         this.gl.drawArrays( this.gl.LINES, 0, this.numPoints );
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, null );
     };
 
     module.Trackball.prototype.drawXZCircle = function( shader ) {
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, this.vboxz );
-        module.lineShader.setAttributes( this.gl, shader );
+        module.flatShader.setAttributes( this.gl, shader );
         this.gl.drawArrays( this.gl.LINES, 0, this.numPoints );
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, null );
     };
 
     module.Trackball.prototype.drawYZCircle = function( shader ) {
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, this.vboyz );
-        module.lineShader.setAttributes( this.gl, shader );
+        module.flatShader.setAttributes( this.gl, shader );
         this.gl.drawArrays( this.gl.LINES, 0, this.numPoints );
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, null );
     };
 
     module.Trackball.prototype.draw = function( shader ) {
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, this.vboxy );
-        module.lineShader.setAttributes( this.gl, shader );
+        module.flatShader.setAttributes( this.gl, shader );
         this.gl.drawArrays( this.gl.LINES, 0, this.numPoints );
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, null );
 
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, this.vboxz );
-        module.lineShader.setAttributes( this.gl, shader );
+        module.flatShader.setAttributes( this.gl, shader );
         this.gl.drawArrays( this.gl.LINES, 0, this.numPoints );
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, null );
 
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, this.vboyz );
-        module.lineShader.setAttributes( this.gl, shader );
+        module.flatShader.setAttributes( this.gl, shader );
         this.gl.drawArrays( this.gl.LINES, 0, this.numPoints );
         this.gl.bindBuffer( this.gl.ARRAY_BUFFER, null );
     };

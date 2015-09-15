@@ -982,7 +982,7 @@ var morphoviewer = ( function( module ) {
             "}"
     };
 
-    module.lineShader = {
+    module.flatShader = {
         camera: mat4.create(),
         model: mat4.create(),
         surfaceColor: vec3.fromValues( 0.8, 0.8, 0.8 ),
@@ -1002,21 +1002,20 @@ var morphoviewer = ( function( module ) {
             program.setUniform( "surfaceColor", this.surfaceColor, {type:"vec3"} );
         },
         vertex:
-        "attribute vec3 vert;\n" +
+            "attribute vec3 vert;\n" +
 
-        "uniform mat4 camera;\n" +
-        "uniform mat4 model;\n" +
+            "uniform mat4 camera;\n" +
+            "uniform mat4 model;\n" +
 
-        "void main( void ) {\n" +
-        "	gl_Position = camera * model * vec4( vert, 1.0 );\n" +
-        "}",
+            "void main( void ) {\n" +
+            "	gl_Position = camera * model * vec4( vert, 1.0 );\n" +
+            "}",
         fragment:
-        "uniform mediump vec3 surfaceColor;\n" +
-        "varying mediump vec3 barycentricPos;\n" +
+            "uniform mediump vec3 surfaceColor;\n" +
 
-        "void main( void ) {\n" +
-        "	gl_FragColor = vec4( surfaceColor, 1.0 );\n" +
-        "}"
+            "void main( void ) {\n" +
+            "	gl_FragColor = vec4( surfaceColor, 1.0 );\n" +
+            "}"
     };
 
     return module;

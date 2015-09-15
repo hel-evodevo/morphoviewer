@@ -185,24 +185,24 @@ var morphoviewer = ( function( tools ) {
                 self.currentProgram.stopUsing();
 
                 self.lineProgram.use();
-                tools.lineShader.camera = self.camera.matrix();
-                tools.lineShader.model = mat4.create();
-                tools.lineShader.surfaceColor = vec3.fromValues( 0.7, 0.7, 0.7 );
+                tools.flatShader.camera = self.camera.matrix();
+                tools.flatShader.model = mat4.create();
+                tools.flatShader.surfaceColor = vec3.fromValues( 0.7, 0.7, 0.7 );
                 if ( self.leftMouseButtonDown ) {
                     //blue
-                    tools.lineShader.surfaceColor = vec3.fromValues(0.38, 0.38, 1.0);
-                    tools.lineShader.setUniforms( self.lineProgram);
+                    tools.flatShader.surfaceColor = vec3.fromValues(0.38, 0.38, 1.0);
+                    tools.flatShader.setUniforms( self.lineProgram);
                     self.trackball.drawXYCircle( self.lineProgram);
                     //green
-                    tools.lineShader.surfaceColor = vec3.fromValues(0.38, 1.0, 0.38);
-                    tools.lineShader.setUniforms( self.lineProgram );
+                    tools.flatShader.surfaceColor = vec3.fromValues(0.38, 1.0, 0.38);
+                    tools.flatShader.setUniforms( self.lineProgram );
                     self.trackball.drawXZCircle( self.lineProgram );
                     //red
-                    tools.lineShader.surfaceColor = vec3.fromValues(1.0, 0.38, 0.38);
-                    tools.lineShader.setUniforms( self.lineProgram );
+                    tools.flatShader.surfaceColor = vec3.fromValues(1.0, 0.38, 0.38);
+                    tools.flatShader.setUniforms( self.lineProgram );
                     self.trackball.drawYZCircle( self.lineProgram );
                 } else {
-                    tools.lineShader.setUniforms( self.lineProgram );
+                    tools.flatShader.setUniforms( self.lineProgram );
                     self.trackball.draw( self.lineProgram );
                 }
                 self.lineProgram.stopUsing();
@@ -230,8 +230,14 @@ var morphoviewer = ( function( tools ) {
         this.colorProgram = progRes[1];
         this.illuminationProgram = progRes[2];
         this.lineProgram = progRes[4];
+        this.planeProgram = this.lineProgram;
         this.hemisphereProgram = progRes[3];
         this.currentProgram = this.hemisphereProgram;
+
+        var showPlane = true;
+        var planeObject = this.gl.createBuffer();
+        this.gl.bindBuffer( this.gl.ARRAY_BUFFER, this.planeObject );
+        this.gl.bindBuffer( this.gl.ARRAY_BUFFER, 0 );
 
         this.viewHemispherical();
     };
@@ -286,9 +292,9 @@ var morphoviewer = ( function( tools ) {
         hemisphereProgram.programFromString( tools.hemisphere.vertex, tools.hemisphere.fragment );
 
         var lineProgram = new tools.Program( gl );
-        lineProgram.programFromString( tools.lineShader.vertex, tools.lineShader.fragment );
-        tools.lineShader.enableAttributes( gl, lineProgram );
-        tools.lineShader.setAttributes( gl, lineProgram );
+        lineProgram.programFromString( tools.flatShader.vertex, tools.flatShader.fragment );
+        tools.flatShader.enableAttributes( gl, lineProgram );
+        tools.flatShader.setAttributes( gl, lineProgram );
 
         return [ wireframeProgram, colorProgram, illuminationProgram, hemisphereProgram, lineProgram ];
     }
