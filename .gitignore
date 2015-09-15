@@ -46,4 +46,5 @@ src/file_io.min.js
 src/graphics.min.js
 src/mesh_tools.min.js
 src/morphoviewer.min.js
+src/geometry.min.js
 distribution/morphoviewer.min.min.js
