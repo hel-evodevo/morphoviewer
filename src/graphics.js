@@ -197,6 +197,29 @@ var morphoviewer = ( function( module ) {
             default: console.log("Program.setUniform: unknown type " + opts["type"] );
         }
     };
+	
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+    // BufferObject class
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+	module.BufferObject = function( gl, target ) {
+		this.gl = gl;
+		this.target = target;
+		this.object = null;
+	};
+	
+	module.BufferObject.prototype.dataStore = function( data, type ) {
+		this.bind();
+		this.gl.bufferData( this.target, data, type );
+		this.unbind();
+	};
+	
+	module.BufferObject.prototype.bind = function() {
+		this.gl.bindBuffer( this.target, this.object );
+	};
+	
+	module.BufferObject.prototype.unbind = function() {
+		this.gl.bindBuffer( this.target, null );
+	};
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // Mesh class
