@@ -204,7 +204,7 @@ var morphoviewer = ( function( module ) {
 	module.BufferObject = function( gl, target ) {
 		this.gl = gl;
 		this.target = target;
-		this.object = null;
+		this.object = this.gl.createBuffer();
 	};
 	
 	module.BufferObject.prototype.dataStore = function( data, type ) {

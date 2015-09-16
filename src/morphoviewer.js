@@ -172,15 +172,9 @@ var morphoviewer = ( function( tools ) {
             1.0, -1.0, 0.0
         ];
         this.showPlane = true;
-        this.planeObject = this.gl.createBuffer();
-        this.planeModelM = mat4.fromScaling( mat4.create(), vec3.fromValues( 1.0, 1.0, 1.0 ) );
-        this.gl.bindBuffer( this.gl.ARRAY_BUFFER, this.planeObject );
-        this.gl.bufferData(
-            this.gl.ARRAY_BUFFER,
-            new Float32Array( vertexData ),
-            this.gl.STATIC_DRAW
-        );
-        this.gl.bindBuffer( this.gl.ARRAY_BUFFER, null );
+        this.planeObject = new tools.BufferObject( this.gl, this.gl.ARRAY_BUFFER );
+        this.planeObject.dataStore( new Float32Array( vertexData ), this.gl.STATIC_DRAW );
+        this.planeModelMatrix = mat4.fromScaling( mat4.create(), vec3.fromValues( 10.0, 10.0, 10.0 ) );
 
         //construct render command
         var drawScene = function() {
@@ -232,14 +226,14 @@ var morphoviewer = ( function( tools ) {
                 self.currentProgram.stopUsing();
                 self.planeProgram.use();
 
-                self.gl.bindBuffer( self.gl.ARRAY_BUFFER, self.planeObject );
+                self.planeObject.bind();
                 tools.flatShader.camera = self.camera.matrix();
-                tools.flatShader.model = self.planeModelM;
+                tools.flatShader.model = self.planeModelMatrix;
                 tools.flatShader.surfaceColor = vec3.fromValues( 0.45, 0.45, 0.7 );
                 tools.flatShader.setUniforms( self.planeProgram );
                 tools.flatShader.setAttributes( self.gl, self.planeProgram );
                 self.gl.drawArrays( self.gl.TRIANGLES, 0, 6 );
-                self.gl.bindBuffer( self.gl.ARRAY_BUFFER, null );
+                self.planeObject.unbind();
 
                 self.planeProgram.stopUsing();
                 self.currentProgram.use();
