@@ -13,7 +13,7 @@ var morphoviewer = ( function( module ) {
             vec3.create(),
             vec3.cross(
                 vec3.create(),
-                this.PlaneVec1,
+                this.planeVec1,
                 this.planeVec2
             )
         );
