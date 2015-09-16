@@ -163,8 +163,26 @@ var morphoviewer = ( function( tools ) {
         //build the trackball before shaders are initialized
         this.trackball = new tools.Trackball( this.gl );
 
-        //construct render command
+        var vertexData = [
+            -1.0, 1.0, 0.0,
+            1.0, 1.0, 0.0,
+            -1.0, -1.0, 0.0,
+            1.0, 1.0, 0.0,
+            -1.0, -1.0, 0.0,
+            1.0, -1.0, 0.0
+        ];
+        this.showPlane = true;
+        this.planeObject = this.gl.createBuffer();
+        this.planeModelM = mat4.fromScaling( mat4.create(), vec3.fromValues( 1.0, 1.0, 1.0 ) );
+        this.gl.bindBuffer( this.gl.ARRAY_BUFFER, this.planeObject );
+        this.gl.bufferData(
+            this.gl.ARRAY_BUFFER,
+            new Float32Array( vertexData ),
+            this.gl.STATIC_DRAW
+        );
+        this.gl.bindBuffer( this.gl.ARRAY_BUFFER, null );
 
+        //construct render command
         var drawScene = function() {
             self.gl.clear( self.gl.COLOR_BUFFER_BIT | self.gl.DEPTH_BUFFER_BIT );
 
@@ -210,6 +228,23 @@ var morphoviewer = ( function( tools ) {
                 self.currentProgram.use();
             }
 
+            if ( self.showPlane ) {
+                self.currentProgram.stopUsing();
+                self.planeProgram.use();
+
+                self.gl.bindBuffer( self.gl.ARRAY_BUFFER, self.planeObject );
+                tools.flatShader.camera = self.camera.matrix();
+                tools.flatShader.model = self.planeModelM;
+                tools.flatShader.surfaceColor = vec3.fromValues( 0.45, 0.45, 0.7 );
+                tools.flatShader.setUniforms( self.planeProgram );
+                tools.flatShader.setAttributes( self.gl, self.planeProgram );
+                self.gl.drawArrays( self.gl.TRIANGLES, 0, 6 );
+                self.gl.bindBuffer( self.gl.ARRAY_BUFFER, null );
+
+                self.planeProgram.stopUsing();
+                self.currentProgram.use();
+            }
+
             self.timer = new Date();
         };
 
@@ -233,11 +268,6 @@ var morphoviewer = ( function( tools ) {
         this.planeProgram = this.lineProgram;
         this.hemisphereProgram = progRes[3];
         this.currentProgram = this.hemisphereProgram;
-
-        var showPlane = true;
-        var planeObject = this.gl.createBuffer();
-        this.gl.bindBuffer( this.gl.ARRAY_BUFFER, this.planeObject );
-        this.gl.bindBuffer( this.gl.ARRAY_BUFFER, 0 );
 
         this.viewHemispherical();
     };
@@ -917,6 +947,14 @@ var morphoviewer = ( function( tools ) {
             this.opcAreaLimit,
             this.totalModelArea
         );
+    };
+
+    module.Viewer.prototype.showOpcSelectionPlane = function() {
+        self.showPlane = true;
+    };
+
+    module.Viewer.prototype.hideOpcSelectionPlane = function() {
+        self.showPlane = false;
     };
 
     //re-export the io namespace
