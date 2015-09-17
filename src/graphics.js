@@ -356,8 +356,6 @@ var morphoviewer = ( function( module ) {
 
         this.polar = Math.PI / 2.0;
         this.azimuth = 0.0;
-        //this.rotation = 0.0;    //the rotation angle about the local forward vector
-        //this.rotationMatrix = mat3.create();
 
         this.viewTransform = mat4.create();
 
@@ -491,15 +489,6 @@ var morphoviewer = ( function( module ) {
         return val;
     }
 
-    /**
-     * Rotate the camera about its local forward axis.
-     * */
-    module.Camera.prototype.rotate = function( delta ) {
-        //this.rotation += delta;
-        mat4.rotate( this.viewTransform, this.viewTransform, delta, this.forward() );
-        //this.rotationMatrix = mat3FromAxisAngle( this.rotation, this.forward() );
-    };
-
     /*Parameters are intended to be
      * a {Number}
      * b {Number}
@@ -553,6 +542,30 @@ var morphoviewer = ( function( module ) {
         //calculate for perspective
         this.targetRadius = 1.1 * widthExtent / Math.tan( 0.5 * this.verticalFOV );
     };
+
+    module.Camera.prototype.rotation = function() {
+        return mat3.multiply(
+            mat3.create(),
+            mat3FromAxisAngle( [0,0,1], this.azimuth ),
+            mat3FromAxisAngle( [1,0,0], 0.5*Math.PI - this.polar )
+        );
+    };
+
+    /*Returns {mat3} rotation matrix corresponding to the rotation
+     * theta about the axis u.*/
+    function mat3FromAxisAngle( u, theta ) {
+        var r = mat3.create();
+        r[0] = Math.cos(theta) + u[0]*u[0] * (1.0 - Math.cos(theta) );
+        r[1] = u[0]*u[1] * (1.0 - Math.cos(theta)) - u[2]*Math.sin(theta);
+        r[2] = u[0]*u[2] * (1.0 - Math.cos(theta)) + u[1]*Math.sin(theta);
+        r[3] = u[1]*u[0] * (1.0 - Math.cos(theta)) + u[2]*Math.sin(theta);
+        r[4] = Math.cos(theta) + u[1]*u[1]*(1.0 - Math.cos(theta));
+        r[5] = u[1]*u[2] * (1.0 - Math.cos(theta)) - u[0]*Math.sin(theta);
+        r[6] = u[2]*u[0] * (1.0 - Math.cos(theta)) - u[1]*Math.sin(theta);
+        r[7] = u[2]*u[1] * (1.0 - Math.cos(theta)) + u[0]*Math.sin(theta);
+        r[8] = Math.cos(theta) + u[2]*u[2] * (1.0 - Math.cos(theta));
+        return r;
+    }
 
     /**
      * @returns {vec3} the normalized vector pointing forward in the local coordinate system
