@@ -175,6 +175,9 @@ var morphoviewer = ( function( tools ) {
         this.planeObject = new tools.BufferObject( this.gl, this.gl.ARRAY_BUFFER );
         this.planeObject.dataStore( new Float32Array( vertexData ), this.gl.STATIC_DRAW );
         this.planeModelMatrix = mat4.fromScaling( mat4.create(), vec3.fromValues( 10.0, 10.0, 10.0 ) );
+        this.planeRotationMatrix = mat4.create();
+        this.planeTranslationMatrix = mat4.create();
+        this.planeScalingMatrix = mat4.create();
 
         //construct render command
         var drawScene = function() {
@@ -228,7 +231,7 @@ var morphoviewer = ( function( tools ) {
 
                 self.planeObject.bind();
                 tools.flatShader.camera = self.camera.matrix();
-                tools.flatShader.model = self.planeModelMatrix;
+                tools.flatShader.model = self.planeScalingMatrix;
                 tools.flatShader.surfaceColor = vec3.fromValues( 0.45, 0.45, 0.7 );
                 tools.flatShader.setUniforms( self.planeProgram );
                 tools.flatShader.setAttributes( self.gl, self.planeProgram );
@@ -381,6 +384,10 @@ var morphoviewer = ( function( tools ) {
                     orientation: orientation
                 });
                 var aabb = tools.getAabbFromUnwrapped( verts );
+                self.planeScalingMatrix = mat4.fromScaling(
+                    mat4.create(),
+                    vec3.fromValues( 0.7*aabb.width, 0.7*aabb.height, 1.0 )
+                );
                 self.trackball.setRadius( aabb.length / 2.3 );
                 self.camera.setBestPositionForModel( aabb );
             } else if ( type === "ply" ) {
@@ -473,6 +480,10 @@ var morphoviewer = ( function( tools ) {
                     orientation: self.meshCache.orientation
                 } );
                 var aabb = tools.getAabb( verts );
+                self.planeScalingMatrix = mat4.fromScaling(
+                    mat4.create(),
+                    vec3.fromValues( 0.7*aabb.width, 0.7*aabb.height, 1.0 )
+                );
                 self.trackball.setRadius( aabb.length / 2.3 );
                 self.camera.setBestPositionForModel( aabb );
             } else if ( type === "csv" ) {
@@ -515,6 +526,10 @@ var morphoviewer = ( function( tools ) {
                 var aabb = tools.getAabb( verts );
                 self.trackball.setRadius( aabb.length / 2.3 );
                 self.camera.setBestPositionForModel( aabb );
+                self.planeScalingMatrix = mat4.fromScaling(
+                    mat4.create(),
+                    vec3.fromValues( 0.7*aabb.width, 0.7*aabb.height, 1.0 )
+                );
             } else {
                 //don't load anything
                 alert("morphoviewer.Viewer.view: unrecognized file format" );

@@ -129,6 +129,8 @@ var morphoviewer = ( function( module ) {
         sqrDist += ( zmax - zmin ) * ( zmax - zmin );
 
         return {
+            width: xmax - xmin,
+            height: ymax - ymin,
             min: { x: xmin, y: ymin, z: zmin },
             max: { x: xmax, y: ymax, z: zmax },
             center: { x: xmin+xmax / 2.0, y: ymin+ymax / 2.0, z: zmin+zmax / 2.0 },

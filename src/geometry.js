@@ -33,5 +33,9 @@ var morphoviewer = ( function( module ) {
         vec3.subtract( this.planeVec1, vec3.fromValues( 0.0, 0.0, 0.0 ), this.planeVec1 );
     };
 
+    module.Plane.prototype.getNormal = function() {
+        return this.normal;
+    };
+
     return module;
 }( morphoviewer || {} ) );
