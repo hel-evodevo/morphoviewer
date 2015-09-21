@@ -1,17 +1,54 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<meta charset="utf-8">
-    <title>Standalone morphoview</title>
-    <style type="text/css">
-		body { font-size: 80%; font-family: 'Lucida Grande', Verdana, Arial, Sans-Serif; }
-		ul#tabs { list-style-type: none; margin: 30px 0 0 0; padding: 0 0 0.3em 0; }
-		ul#tabs li { display: inline; }
-		ul#tabs li a { color: #42454a; background-color: #dedbde; border: 1px solid #c9c3ba; border-bottom: none; padding: 0.3em; text-decoration: none; }
-		ul#tabs li a:hover { background-color: #f1f0ee; }
-		ul#tabs li a.selected { color: #000; background-color: #f1f0ee; font-weight: bold; padding: 0.7em 0.3em 0.38em 0.3em; }
-		div.tabContent { border: 1px solid #c9c3ba; padding: 0.5em; background-color: #f1f0ee; }
-		div.tabContent.hide { display: none; }
+	<title>Standalone morphoview</title>
+	<style type="text/css">
+		body {
+			font-size: 80%;
+			font-family: 'Lucida Grande', Verdana, Arial, Sans-Serif;
+		}
+		
+		ul#tabs {
+			list-style-type: none;
+			margin: 30px 0 0 0;
+			padding: 0 0 0.3em 0;
+		}
+		
+		ul#tabs li {
+			display: inline;
+		}
+		
+		ul#tabs li a {
+			color: #42454a;
+			background-color: #dedbde;
+			border: 1px solid #c9c3ba;
+			border-bottom: none;
+			padding: 0.3em;
+			text-decoration: none;
+		}
+		
+		ul#tabs li a:hover {
+			background-color: #f1f0ee;
+		}
+		
+		ul#tabs li a.selected {
+			color: #000;
+			background-color: #f1f0ee;
+			font-weight: bold;
+			padding: 0.7em 0.3em 0.38em 0.3em;
+		}
+		
+		div.tabContent {
+			border: 1px solid #c9c3ba;
+			padding: 0.5em;
+			background-color: #f1f0ee;
+		}
+		
+		div.tabContent.hide {
+			display: none;
+		}
 		
 		#dropZone {
 			border: 2px dashed #bbb;
@@ -29,18 +66,23 @@
 		#footer {
 			background-color: #f1f1f1;
 		}
+		
 		#main-wrap {
 			background-color: #D9D9D9;
 		}
+		
 		#sidebar {
 			background-color: #d2d2d2;
 		}
+		
 		#content-wrap {
 			background-color: #c5c5c5;
 		}
 	</style>
 	<style type="text/css">
-		#main-wrap > div { min-height: 800px; }
+		#main-wrap > div {
+			min-height: 800px;
+		}
 		
 		#sidebar {
 			float: right;
@@ -61,7 +103,7 @@
 			min-height: 40px;
 		}
 	</style>
-	
+
 	<script type="text/javascript">
 		var tabLinks = new Array();
 		var contentDivs = new Array();
@@ -129,30 +171,29 @@
 		  return url.substring( hashPos + 1 );
 		}
 	</script>
-	
+
 	<script src="https://cdn.rawgit.com/Nelarius/Morphoviewer/master/distribution/morphoviewer.min.js"></script>
 </head>
+
 <body onload="init()">
-	
+
 	<div id="header">
 		<h1>Standalone Morphoviewer</h1>
 	</div>
-	
+
 	<div id="main-wrap">
 		<div id="content-wrap">
 			<!-- TODO: figure out a way to set the width of the canvas as a function of the div element that the canvas is in!-->
 			<canvas width="1250" height="900" id="testcanvas" style="border:5px solid #c5c5c5;">
-			  Your browser doesn't appear to support the HTML5 canvas element.
-			  Consider updating your browser!
+				Your browser doesn't appear to support the HTML5 canvas element. Consider updating your browser!
 			</canvas>
 			<script>
-			  var viewer = new morphoviewer.Viewer("testcanvas");
+				var viewer = new morphoviewer.Viewer("testcanvas");
 			  viewer.setBackgroundColor([0.854902,0.886275,0.901961]);
-			  
 			</script>
-			
+
 		</div>
-		
+
 		<div id="sidebar">
 			<h2>The controls</h2>
 			<ul id="tabs">
@@ -161,16 +202,16 @@
 				<li><a href="#graphics">Graphics</a></li>
 				<li><a href="#opc">OPC tools</a></li>
 			</ul>
-			
+
 			<div class="tabContent" id="file">
 				<p>Supported file types: PLY, CSV, STL.</p>
-				
+
 				<p>Select a file for viewing:</p>
-				
+
 				<input type="file" id="files" name="files[]" multiple />
-				
+
 				<p>or, drag and drop the file here:</p>
-				
+
 				<div id="dropZone">Drop file here</div>
 				<output id="list"></output>
 				<script type="text/javascript">
@@ -281,13 +322,13 @@
 				<button onclick="viewer.viewOrtho();">ortho</button>
 				<button onclick="viewer.viewPerspective();">perspective</button>
 				<input id="fov" type="range" min="0.1" max="100" step="0.1" value="67" oninput="viewer.setFOV(this.value)">
-				
+
 				<h3>Shading</h3>
 				<button onclick="viewer.viewWireframe()">wireframe</button>
 				<button onclick="viewer.viewSurfaceCurvature();">curvature</button>
 				<button onclick="viewer.calculateOrientation(); viewer.viewSurfaceOrientation();">orientation</button>
 				<button onclick="viewer.viewHemispherical()">illumination</button>
-				
+
 				<h3>Illumination controls</h3>
 				<input id="polar" type="range" min="0.1" max="3.14" step="0.1" value="1.57" oninput="viewer.setLightPolarAngle(this.value)">
 				<input id="azimuth" type="range" min="0.1" max="6.283" step="0.1" value="0" oninput="viewer.setLightAzimuthalAngle(this.value)">
@@ -303,18 +344,18 @@
 				<input id="area" type="range" min="0.0" max="3.0" step="0.02" value="0.1" oninput="limit(this.value)">
 				<br />
 				<em id="limit">area</em>
-				
+
 				<br/>
-				
+
 				<button onclick="limit(0.01)">Preset 0.01%</button>
 				<button onclick="limit(0.1)">Preset 0.1%</button>
 				<br/>
 				<button onclick="limit(1.0)">Preset 1%</button>
 				<button onclick="limit(3.0)">Preset 3%</button>
-				
+
 				<p>Calculate the new orientation patch data about the current camera forward vector:</p>
 				<button onclick="viewer.calculateOrientation()">calculate orientation</button>
-				
+
 				<script>
 					function opc() {
 						var count = viewer.opc();
@@ -328,4 +369,5 @@
 		</div>
 	</div>
 </body>
+
 </html>
