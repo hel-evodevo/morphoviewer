@@ -106,70 +106,70 @@
 
     <script type="text/javascript">
         var tabLinks = new Array();
-		var contentDivs = new Array();
+        var contentDivs = new Array();
 
-		function init() {
+        function init() {
 
-		  // Grab the tab links and content divs from the page
-		  var tabListItems = document.getElementById('tabs').childNodes;
-		  for ( var i = 0; i < tabListItems.length; i++ ) {
-			if ( tabListItems[i].nodeName == "LI" ) {
-			  var tabLink = getFirstChildWithTagName( tabListItems[i], 'A' );
-			  var id = getHash( tabLink.getAttribute('href') );
-			  tabLinks[id] = tabLink;
-			  contentDivs[id] = document.getElementById( id );
-			}
-		  }
+        // Grab the tab links and content divs from the page
+        var tabListItems = document.getElementById('tabs').childNodes;
+        for ( var i = 0; i < tabListItems.length; i++ ) {
+            if ( tabListItems[i].nodeName == "LI" ) {
+            var tabLink = getFirstChildWithTagName( tabListItems[i], 'A' );
+            var id = getHash( tabLink.getAttribute('href') );
+            tabLinks[id] = tabLink;
+            contentDivs[id] = document.getElementById( id );
+            }
+        }
 
-		  // Assign onclick events to the tab links, and
-		  // highlight the first tab
-		  var i = 0;
+        // Assign onclick events to the tab links, and
+        // highlight the first tab
+        var i = 0;
 
-		  for ( var id in tabLinks ) {
-			tabLinks[id].onclick = showTab;
-			tabLinks[id].onfocus = function() { this.blur() };
-			if ( i == 0 ) tabLinks[id].className = 'selected';
-			i++;
-		  }
+        for ( var id in tabLinks ) {
+            tabLinks[id].onclick = showTab;
+            tabLinks[id].onfocus = function() { this.blur() };
+            if ( i == 0 ) tabLinks[id].className = 'selected';
+            i++;
+        }
 
-		  // Hide all content divs except the first
-		  var i = 0;
+        // Hide all content divs except the first
+        var i = 0;
 
-		  for ( var id in contentDivs ) {
-			if ( i != 0 ) contentDivs[id].className = 'tabContent hide';
-			i++;
-		  }
-		}
+        for ( var id in contentDivs ) {
+            if ( i != 0 ) contentDivs[id].className = 'tabContent hide';
+            i++;
+        }
+        }
 
-		function showTab() {
-		  var selectedId = getHash( this.getAttribute('href') );
+        function showTab() {
+        var selectedId = getHash( this.getAttribute('href') );
 
-		  // Highlight the selected tab, and dim all others.
-		  // Also show the selected content div, and hide all others.
-		  for ( var id in contentDivs ) {
-			if ( id == selectedId ) {
-			  tabLinks[id].className = 'selected';
-			  contentDivs[id].className = 'tabContent';
-			} else {
-			  tabLinks[id].className = '';
-			  contentDivs[id].className = 'tabContent hide';
-			}
-		  }
+        // Highlight the selected tab, and dim all others.
+        // Also show the selected content div, and hide all others.
+        for ( var id in contentDivs ) {
+            if ( id == selectedId ) {
+            tabLinks[id].className = 'selected';
+            contentDivs[id].className = 'tabContent';
+            } else {
+            tabLinks[id].className = '';
+            contentDivs[id].className = 'tabContent hide';
+            }
+        }
 
-		  // Stop the browser following the link
-		  return false;
-		}
+        // Stop the browser following the link
+        return false;
+        }
 
-		function getFirstChildWithTagName( element, tagName ) {
-		  for ( var i = 0; i < element.childNodes.length; i++ ) {
-			if ( element.childNodes[i].nodeName == tagName ) return element.childNodes[i];
-		  }
-		}
+        function getFirstChildWithTagName( element, tagName ) {
+        for ( var i = 0; i < element.childNodes.length; i++ ) {
+            if ( element.childNodes[i].nodeName == tagName ) return element.childNodes[i];
+        }
+        }
 
-		function getHash( url ) {
-		  var hashPos = url.lastIndexOf ( '#' );
-		  return url.substring( hashPos + 1 );
-		}
+        function getHash( url ) {
+        var hashPos = url.lastIndexOf ( '#' );
+        return url.substring( hashPos + 1 );
+        }
     </script>
 
     <script src="https://cdn.rawgit.com/Nelarius/Morphoviewer/master/distribution/morphoviewer.min.js"></script>
@@ -216,65 +216,65 @@
                 <output id="list"></output>
                 <script type="text/javascript">
                     // check for the various file API support
-					if (window.File && window.FileReader && window.FileList && window.Blob) {
-						// Great success! All the File APIs are supported.
-					} else {
-						alert('The required File APIs are not fully supported in this browser.');
-					}
-					
-					function readFile( event ) {						
-						var files = event.target.files;
-						// the user may have uploaded many files, we use just the first one
-						var file = files[0];
-						var output = [];
-						output.push(
-							'<li><strong>', escape(file.name), '</strong> (', file.type || 'n/a', ') - ',
-							file.size, ' bytes, last modified: ',
-							file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() : 'n/a',
-							'</li>'
-						);
-						document.getElementById( 'list' ).innerHTML = '<ul>' + output.join('') + '</ul>';
-						
-						var reader = new FileReader();
-						reader.onload = function( event ) {
-							viewer.loadData( event.target.result );
-						};
-						reader.readAsBinaryString( file );
-					}
+                    if (window.File && window.FileReader && window.FileList && window.Blob) {
+                        // Great success! All the File APIs are supported.
+                    } else {
+                        alert('The required File APIs are not fully supported in this browser.');
+                    }
+                    
+                    function readFile( event ) {						
+                        var files = event.target.files;
+                        // the user may have uploaded many files, we use just the first one
+                        var file = files[0];
+                        var output = [];
+                        output.push(
+                            '<li><strong>', escape(file.name), '</strong> (', file.type || 'n/a', ') - ',
+                            file.size, ' bytes, last modified: ',
+                            file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() : 'n/a',
+                            '</li>'
+                        );
+                        document.getElementById( 'list' ).innerHTML = '<ul>' + output.join('') + '</ul>';
+                        
+                        var reader = new FileReader();
+                        reader.onload = function( event ) {
+                            viewer.loadData( event.target.result );
+                        };
+                        reader.readAsBinaryString( file );
+                    }
 
-					function handleDragOver( event ) {
-						event.stopPropagation();
-						event.preventDefault();
-						event.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
-					}
-					
-					function handleFileDrop( event ) {
-						event.stopPropagation();
-						event.preventDefault();
-						
-						var files = event.dataTransfer.files;
-						var file = files[0];
-						var output = [];
-						output.push(
-							'<li><strong>', escape(file.name), '</strong> (', file.type || 'n/a', ') - ',
-							file.size, ' bytes, last modified: ',
-							file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() : 'n/a',
-							'</li>'
-						);
-						document.getElementById( 'list' ).innerHTML = '<ul>' + output.join('') + '</ul>';
-						
-						var reader = new FileReader();
-						reader.onload = function( event ) {
-							viewer.loadData( event.target.result );
-						};	
-						reader.readAsBinaryString( file );
-					}
+                    function handleDragOver( event ) {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+                    }
+                    
+                    function handleFileDrop( event ) {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        
+                        var files = event.dataTransfer.files;
+                        var file = files[0];
+                        var output = [];
+                        output.push(
+                            '<li><strong>', escape(file.name), '</strong> (', file.type || 'n/a', ') - ',
+                            file.size, ' bytes, last modified: ',
+                            file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() : 'n/a',
+                            '</li>'
+                        );
+                        document.getElementById( 'list' ).innerHTML = '<ul>' + output.join('') + '</ul>';
+                        
+                        var reader = new FileReader();
+                        reader.onload = function( event ) {
+                            viewer.loadData( event.target.result );
+                        };	
+                        reader.readAsBinaryString( file );
+                    }
 
-					// Setup the download listeners.
-					document.getElementById('files').addEventListener( 'change', readFile, false );
-					var dropZone = document.getElementById('dropZone');
-					dropZone.addEventListener( 'dragover', handleDragOver, false );
-					dropZone.addEventListener( 'drop', handleFileDrop, false );
+                    // Setup the download listeners.
+                    document.getElementById('files').addEventListener( 'change', readFile, false );
+                    var dropZone = document.getElementById('dropZone');
+                    dropZone.addEventListener( 'dragover', handleDragOver, false );
+                    dropZone.addEventListener( 'drop', handleFileDrop, false );
                 </script>
             </div>
             <div class="tabContent" id="show">
@@ -291,29 +291,29 @@
                 <h3>Tracking ball</h3>
                 <script type="text/javascript">
                     function toggle() {
-						var element = document.getElementById( "trackingBallButton" );       
-						if ( element.value == "hide" ) {
-							element.value = "show";
-							viewer.hideTrackingball();
-						} else if ( element.value == "show") {
-							element.value = "hide";
-							viewer.showTrackingball();
-						}
-					}
+                        var element = document.getElementById( "trackingBallButton" );       
+                        if ( element.value == "hide" ) {
+                            element.value = "show";
+                            viewer.hideTrackingball();
+                        } else if ( element.value == "show") {
+                            element.value = "hide";
+                            viewer.showTrackingball();
+                        }
+                    }
                 </script>
                 <input type="button" value="hide" id="trackingBallButton" onclick="toggle();"></input>
                 <h3>OPC plane</h3>
                 <script type="text/javascript">
                     function togglePlane() {
-						var element = document.getElementById( "planeButton" );
-						if ( element.value == "hide" ) {
-							element.value = "show";
-							viewer.hideOpcSelectionPlane();
-						} else if ( element.value == "show" ) {
-							element.value = "hide";
-							viewer.showOpcSelectionPlane();
-						}
-					}
+                        var element = document.getElementById( "planeButton" );
+                        if ( element.value == "hide" ) {
+                            element.value = "show";
+                            viewer.hideOpcSelectionPlane();
+                        } else if ( element.value == "show" ) {
+                            element.value = "hide";
+                            viewer.showOpcSelectionPlane();
+                        }
+                    }
                 </script>
                 <input type="button" value="hide" id="planeButton" onclick="togglePlane();"></input>
             </div>
@@ -336,9 +336,9 @@
             <div class="tabContent" id="opc">
                 <script>
                     function limit( value ) {
-						viewer.setPatchCutoff( value );
-						document.getElementById("limit").innerHTML = value;
-					}
+                        viewer.setPatchCutoff( value );
+                        document.getElementById("limit").innerHTML = value;
+                    }
                 </script>
                 <p>Set the lower limit of patch size to be taken into the orientation patch count. Values range from 0 to 3.</p>
                 <input id="area" type="range" min="0.0" max="3.0" step="0.02" value="0.1" oninput="limit(this.value)">
@@ -358,9 +358,9 @@
 
                 <script>
                     function opc() {
-						var count = viewer.opc();
-						document.getElementById("opc").innerHTML = "The OPC is " + count;
-					}
+                        var count = viewer.opc();
+                        document.getElementById("opc").innerHTML = "The OPC is " + count;
+                    }
                 </script>
                 <button onclick="opc()">calculate OPC</button>
                 <br/>
