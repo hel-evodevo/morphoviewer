@@ -171,7 +171,7 @@ var morphoviewer = ( function( tools ) {
             -1.0, -1.0, 0.0,
             1.0, -1.0, 0.0
         ];
-        this.showPlane = true;
+        this.showPlane = false;
         this.planeObject = new tools.BufferObject( this.gl, this.gl.ARRAY_BUFFER );
         this.planeObject.dataStore( new Float32Array( vertexData ), this.gl.STATIC_DRAW );
         this.planeModelMatrix = mat4.fromScaling( mat4.create(), vec3.fromValues( 10.0, 10.0, 10.0 ) );
