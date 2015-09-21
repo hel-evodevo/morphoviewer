@@ -1,10 +1,246 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<meta charset="utf-8">
     <title>Standalone morphoview</title>
-    
+    <style type="text/css">
+		body { font-size: 80%; font-family: 'Lucida Grande', Verdana, Arial, Sans-Serif; }
+		ul#tabs { list-style-type: none; margin: 30px 0 0 0; padding: 0 0 0.3em 0; }
+		ul#tabs li { display: inline; }
+		ul#tabs li a { color: #42454a; background-color: #dedbde; border: 1px solid #c9c3ba; border-bottom: none; padding: 0.3em; text-decoration: none; }
+		ul#tabs li a:hover { background-color: #f1f0ee; }
+		ul#tabs li a.selected { color: #000; background-color: #f1f0ee; font-weight: bold; padding: 0.7em 0.3em 0.38em 0.3em; }
+		div.tabContent { border: 1px solid #c9c3ba; padding: 0.5em; background-color: #f1f0ee; }
+		div.tabContent.hide { display: none; }
+		
+		#dropZone {
+		  border: 2px dashed #bbb;
+		  -moz-border-radius: 5px;
+		  -webkit-border-radius: 5px;
+		  border-radius: 5px;
+		  padding: 25px;
+		  text-align: center;
+		  font: 20pt bold 'Vollkorn';
+		  color: #bbb;
+		}
+	</style>
+	<style type="text/css">
+		#header,
+		#footer {
+			background-color: #f1f1f1;
+		}
+		#main-wrap {
+			background-color: #D9D9D9;
+		}
+		#sidebar {
+			background-color: #d2d2d2;
+		}
+		#content-wrap {
+			background-color: #c5c5c5;
+		}
+	</style>
+	<style type="text/css">
+		#main-wrap > div { min-height: 800px; }
+		
+		#sidebar {
+			float: right;
+			width: 30%;
+		}
+		
+		#main-wrap {
+			overflow: hidden;
+		}
+		
+		#content-wrap {
+			float: left;
+			width: 70%;
+		}
+		
+		#header,
+		#footer {
+			min-height: 40px;
+		}
+	</style>
+	
+	<script type="text/javascript">
+		var tabLinks = new Array();
+		var contentDivs = new Array();
+
+		function init() {
+
+		  // Grab the tab links and content divs from the page
+		  var tabListItems = document.getElementById('tabs').childNodes;
+		  for ( var i = 0; i < tabListItems.length; i++ ) {
+			if ( tabListItems[i].nodeName == "LI" ) {
+			  var tabLink = getFirstChildWithTagName( tabListItems[i], 'A' );
+			  var id = getHash( tabLink.getAttribute('href') );
+			  tabLinks[id] = tabLink;
+			  contentDivs[id] = document.getElementById( id );
+			}
+		  }
+
+		  // Assign onclick events to the tab links, and
+		  // highlight the first tab
+		  var i = 0;
+
+		  for ( var id in tabLinks ) {
+			tabLinks[id].onclick = showTab;
+			tabLinks[id].onfocus = function() { this.blur() };
+			if ( i == 0 ) tabLinks[id].className = 'selected';
+			i++;
+		  }
+
+		  // Hide all content divs except the first
+		  var i = 0;
+
+		  for ( var id in contentDivs ) {
+			if ( i != 0 ) contentDivs[id].className = 'tabContent hide';
+			i++;
+		  }
+		}
+
+		function showTab() {
+		  var selectedId = getHash( this.getAttribute('href') );
+
+		  // Highlight the selected tab, and dim all others.
+		  // Also show the selected content div, and hide all others.
+		  for ( var id in contentDivs ) {
+			if ( id == selectedId ) {
+			  tabLinks[id].className = 'selected';
+			  contentDivs[id].className = 'tabContent';
+			} else {
+			  tabLinks[id].className = '';
+			  contentDivs[id].className = 'tabContent hide';
+			}
+		  }
+
+		  // Stop the browser following the link
+		  return false;
+		}
+
+		function getFirstChildWithTagName( element, tagName ) {
+		  for ( var i = 0; i < element.childNodes.length; i++ ) {
+			if ( element.childNodes[i].nodeName == tagName ) return element.childNodes[i];
+		  }
+		}
+
+		function getHash( url ) {
+		  var hashPos = url.lastIndexOf ( '#' );
+		  return url.substring( hashPos + 1 );
+		}
+	</script>
+	
+	<script src="https://cdn.rawgit.com/Nelarius/Morphoviewer/master/distribution/morphoviewer.min.js"></script>
 </head>
-<body>
-    <p>Hello, there.</p>
+<body onload="init()">
+	
+	<div id="header">
+		<h1>Standalone Morphoviewer</h1>
+	</div>
+	
+	<div id="main-wrap">
+		<div id="content-wrap">
+			<!-- TODO: figure out a way to set the width of the canvas as a function of the div element that the canvas is in!-->
+			<canvas width="1250" height="900" id="testcanvas" style="border:3px solid #000000;">
+			  Your browser doesn't appear to support the HTML5 canvas element.
+			  Consider updating your browser!
+			</canvas>
+			<script>
+			  var viewer = new morphoviewer.Viewer("testcanvas");
+			  viewer.setBackgroundColor([0.854902,0.886275,0.901961]);
+			  
+			</script>
+			
+		</div>
+		
+		<div id="sidebar">
+			<h2>The controls</h2>
+			<ul id="tabs">
+				<li><a href="#file">File</a></li>
+				<li><a href="#show">Show/hide</a></li>
+				<li><a href="#graphics">Graphics</a></li>
+				<li><a href="#opc">OPC tools</a></li>
+			</ul>
+			
+			<div class="tabContent" id="file">
+				<p>Supported file types: PLY, CSV, STL.</p>
+				
+				<p>Select a file for viewing:</p>
+				
+				<input type="file" id="files" name="files[]" multiple />
+				
+				<p>or, drag and drop the file here:</p>
+				
+				<div id="dropZone">Drop file here</div>
+				<output id="list"></output>
+				<script type="text/javascript">
+					// check for the various file API support
+					if (window.File && window.FileReader && window.FileList && window.Blob) {
+						// Great success! All the File APIs are supported.
+					} else {
+						alert('The required File APIs are not fully supported in this browser.');
+					}
+					
+					function readFile( event ) {						
+						var files = event.target.files;
+						// the user may have uploaded many files, we use just the first one
+						var file = files[0];
+						var output = [];
+						output.push(
+							'<li><strong>', escape(file.name), '</strong> (', file.type || 'n/a', ') - ',
+							file.size, ' bytes, last modified: ',
+							file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() : 'n/a',
+							'</li>'
+						);
+						document.getElementById( 'list' ).innerHTML = '<ul>' + output.join('') + '</ul>';
+					}
+
+					function handleDragOver( event ) {
+						event.stopPropagation();
+						event.preventDefault();
+						event.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+					}
+					
+					function handleFileDrop( event ) {
+						event.stopPropagation();
+						event.preventDefault();
+						
+						var files = event.dataTransfer.files;
+						var file = files[0];
+						var output = [];
+						output.push(
+							'<li><strong>', escape(file.name), '</strong> (', file.type || 'n/a', ') - ',
+							file.size, ' bytes, last modified: ',
+							file.lastModifiedDate ? file.lastModifiedDate.toLocaleDateString() : 'n/a',
+							'</li>'
+						);
+						document.getElementById( 'list' ).innerHTML = '<ul>' + output.join('') + '</ul>';
+						
+						var reader = new FileReader();
+						
+						reader.onload = function( data ) {
+							viewer.loadData( data );
+						};	
+						reader.readAsBinaryString( file );
+					}
+
+					// Setup the download listeners.
+					document.getElementById('files').addEventListener( 'change', readFile, false );
+					var dropZone = document.getElementById('dropZone');
+					dropZone.addEventListener( 'dragover', handleDragOver, false );
+					dropZone.addEventListener( 'drop', handleFileDrop, false );
+				</script>
+			</div>
+			<div class="tabContent" id="show">
+				<p>Buttons go here</p>
+			</div>
+			<div class="tabContent" id="graphics">
+				<p>Control the shading</p>
+			</div>
+			<div class="tabContent" id="opc">
+				<p>Analyze here</p>
+			</div>
+		</div>
+	</div>
 </body>
 </html>
