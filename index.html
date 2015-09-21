@@ -193,6 +193,12 @@
 							'</li>'
 						);
 						document.getElementById( 'list' ).innerHTML = '<ul>' + output.join('') + '</ul>';
+						
+						var reader = new FileReader();
+						reader.onload = function( event ) {
+							viewer.loadData( event.target.result );
+						};
+						reader.readAsBinaryString( file );
 					}
 
 					function handleDragOver( event ) {
@@ -217,9 +223,8 @@
 						document.getElementById( 'list' ).innerHTML = '<ul>' + output.join('') + '</ul>';
 						
 						var reader = new FileReader();
-						
-						reader.onload = function( data ) {
-							viewer.loadData( data );
+						reader.onload = function( event ) {
+							viewer.loadData( event.target.result );
 						};	
 						reader.readAsBinaryString( file );
 					}
