@@ -260,10 +260,10 @@ var morphoviewer = ( function( tools ) {
         var progRes = initShaders( this.gl );
         this.wireframeProgram = progRes[0];
         this.colorProgram = progRes[1];
-        this.illuminationProgram = progRes[2];
-        this.lineProgram = progRes[4];
+        //this.illuminationProgram = progRes[2];
+        this.lineProgram = progRes[3];
         this.planeProgram = this.lineProgram;
-        this.hemisphereProgram = progRes[3];
+        this.hemisphereProgram = progRes[2];
         this.currentProgram = this.hemisphereProgram;
 
         this.viewHemispherical();
@@ -312,9 +312,6 @@ var morphoviewer = ( function( tools ) {
         var colorProgram = new tools.Program( gl );
         colorProgram.programFromString( tools.color.vertex, tools.color.fragment );
 
-        var illuminationProgram = new tools.Program( gl );
-        illuminationProgram.programFromString( tools.directional.vertex, tools.directional.fragment );
-
         var hemisphereProgram = new tools.Program( gl );
         hemisphereProgram.programFromString( tools.hemisphere.vertex, tools.hemisphere.fragment );
 
@@ -323,7 +320,7 @@ var morphoviewer = ( function( tools ) {
         tools.flatShader.enableAttributes( gl, lineProgram );
         tools.flatShader.setAttributes( gl, lineProgram );
 
-        return [ wireframeProgram, colorProgram, illuminationProgram, hemisphereProgram, lineProgram ];
+        return [ wireframeProgram, colorProgram, hemisphereProgram, lineProgram ];
     }
 
     /**
