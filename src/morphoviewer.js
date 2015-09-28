@@ -36,6 +36,7 @@ var morphoviewer = ( function( tools ) {
          * as an argument.
          * */
         this.meshCache = { vertex: [], normal: [], curvature: [], orientation: [] };
+        this.cameraCache = mat4.create();
 
         this.opcAreaLimit = 0.3;  // this is a percentage
         this.totalModelArea = 1.0;
@@ -524,7 +525,8 @@ var morphoviewer = ( function( tools ) {
             alert("morphoviewer.Viewer.view: unrecognized file format" );
             return;
         }
-
+           
+        this.cameraCache = this.camera.rotation();
         self.totalModelArea = tools.modelArea( self.meshCache.wrappedVertex, self.meshCache.index );
 
     };
@@ -746,6 +748,7 @@ var morphoviewer = ( function( tools ) {
         this.meshCache.orientation = tools.surfaceOrientationAboutCamera( this.meshCache.normal, this.camera.rotation() );
         this.mesh = new tools.Mesh( this.gl );
         this.mesh.build( this.meshCache );
+        this.cameraCache = this.camera.rotation();
     };
 
     /**
@@ -766,7 +769,7 @@ var morphoviewer = ( function( tools ) {
             return 0;
         }
         // calculate the wrapped orientation values
-        var mat = this.camera.rotation();
+        var mat = this.cameraCache;
         var norms = this.meshCache.wrappedNormal;
         var orientation = [];
         var n = 8;
