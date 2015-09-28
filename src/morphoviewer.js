@@ -145,7 +145,7 @@ var morphoviewer = ( function( tools ) {
             //IE9, Chrome, Safari, Opera
             this.canvas.addEventListener( "mousewheel", onMouseWheel, false );
             //Firefox
-            this.canvas.addEventListener( "DOMMouseScroll", onMouseWheel );
+            this.canvas.addEventListener( "DOMMouseScroll", onMouseWheel, false );
         } else {
             this.canvas.addEventListener( "onmousewheel", onMouseWheel );
         }
