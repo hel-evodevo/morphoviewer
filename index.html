@@ -359,12 +359,12 @@
                 <script>
                     function opc() {
                         var count = viewer.opc();
-                        document.getElementById("opc").innerHTML = "The OPC is " + count;
+                        document.getElementById("opcOutput").innerHTML = "The OPC is " + count;
                     }
                 </script>
                 <button onclick="opc()">calculate OPC</button>
                 <br/>
-                <em id="opc"></em>
+                <div id="opcOutput" style="border: 2px solid #a8a6a7; padding: 10px; margin-top: 5px;">Press <em>Calculate OPC</em> to get the value.</div>
             </div>
         </div>
     </div>
