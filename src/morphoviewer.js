@@ -800,6 +800,10 @@ var morphoviewer = ( function( tools ) {
     module.Viewer.prototype.hideOpcSelectionPlane = function() {
         self.showPlane = false;
     };
+    
+    module.Viewer.prototype.modelArea = function() {
+        return this.totalModelArea;
+    };
 
     //re-export the io namespace
     module.io = {};
