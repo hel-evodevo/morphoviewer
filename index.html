@@ -183,7 +183,7 @@
         }
     </script>
 
-    <script src="https://rawgit.com/Nelarius/morphoviewer/master/distribution/morphoviewer.min.js"></script>
+    <script src="morphoviewer.min.js"></script>
 </head>
 
 <body onload="init()">
@@ -382,6 +382,8 @@
                 <button onclick="opc()">calculate OPC</button>
                 <br/>
                 <div id="opcOutput" style="border: 2px solid #a8a6a7; padding: 10px; margin-top: 5px;">Press <em>Calculate OPC</em> to get the value.</div>
+                <hr>
+                <button onclick="viewer.setOpcSelectionPlane()">set OPC selection plane</button>
             </div>
         </div>
     </div>
