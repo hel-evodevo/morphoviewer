@@ -1,5 +1,24 @@
 
 var morphoviewer = ( function( module ) {
+    
+    /*
+     * Calculates the rotation matrix from the normalized orientation vector s, 
+     * to the normalized orientation vector t.
+     * */
+    module.rotationMatrix = function( s, t ) {
+        var v = vec3.cross( vec3.create(), s, t );
+        var vx = v[0];
+        var vy = v[1];
+        var vz = v[2];
+        var e = vec3.dot( s, t );
+        var h = 1.0 / ( 1.0 + e );
+        var out = new glMatrix.ARRAY_TYPE(16);
+        out[0] = e + h*vx*vx;   out[1] = h*vx*vy - vz;  out[2] = h*vx*vz + vy;  out[3] = 0.0;
+        out[4] = h*vx*vy + vz;  out[5] = e + h*vy*vy;   out[6] = h*vy*vz - vx;  out[7] = 0.0;
+        out[8] = h*vx*vz - vy;  out[9] = h*vy*vz + vx;  out[10] = e + h*vz*vz;  out[11] = 0.0;
+        out[12] = 0.0;          out[13] = 0.0;          out[14] = 0.0;          out[15] = 1.0;
+        return out;
+    };
 
     /*
     * A plane is defined by three points

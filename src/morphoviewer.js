@@ -172,13 +172,17 @@ var morphoviewer = ( function( tools ) {
             -1.0, -1.0, 0.0,
             1.0, -1.0, 0.0
         ];
-        this.showPlane = false;
+        this.showPlane = true;
         this.planeObject = new tools.BufferObject( this.gl, this.gl.ARRAY_BUFFER );
         this.planeObject.dataStore( new Float32Array( vertexData ), this.gl.STATIC_DRAW );
-        this.planeModelMatrix = mat4.fromScaling( mat4.create(), vec3.fromValues( 10.0, 10.0, 10.0 ) );
         this.planeRotationMatrix = mat4.create();
         this.planeTranslationMatrix = mat4.create();
         this.planeScalingMatrix = mat4.create();
+        this.plane = new tools.Plane(
+            vec3.fromValues( 0.0, 0.0, 0.0 ),
+            vec3.fromValues( 1.0, 0.0, 0.0 ),
+            vec3.fromValues( 0.0, 0.0, -1.0 )
+        );
 
         //construct render command
         var drawScene = function() {
@@ -232,7 +236,17 @@ var morphoviewer = ( function( tools ) {
 
                 self.planeObject.bind();
                 tools.flatShader.camera = self.camera.matrix();
-                tools.flatShader.model = self.planeScalingMatrix;
+                var modelMatrix =  mat4.multiply(
+                    mat4.create(),
+                    self.planeRotationMatrix,
+                    self.planeScalingMatrix
+                );
+                mat4.multiply(
+                    modelMatrix,
+                    self.planeTranslationMatrix,
+                    modelMatrix
+                );
+                tools.flatShader.model = modelMatrix;
                 tools.flatShader.surfaceColor = vec3.fromValues( 0.45, 0.45, 0.7 );
                 tools.flatShader.setUniforms( self.planeProgram );
                 tools.flatShader.setAttributes( self.gl, self.planeProgram );
@@ -794,11 +808,26 @@ var morphoviewer = ( function( tools ) {
     };
 
     module.Viewer.prototype.showOpcSelectionPlane = function() {
-        self.showPlane = true;
+        this.showPlane = true;
     };
 
     module.Viewer.prototype.hideOpcSelectionPlane = function() {
-        self.showPlane = false;
+        this.showPlane = false;
+    };
+
+    module.Viewer.prototype.setOpcSelectionPlane = function() {
+        // the rotation matrix is defined in geometry.js
+        this.planeRotationMatrix = mat4.invert(
+            mat4.create(),
+            tools.rotationMatrix(
+                vec3.fromValues( 0.0, 0.0, -1.0 ),
+                this.camera.forward()
+            ) 
+        );
+    };
+
+    module.Viewer.prototype.translateOpcSelectionPlane = function() {
+        //
     };
     
     module.Viewer.prototype.modelArea = function() {
