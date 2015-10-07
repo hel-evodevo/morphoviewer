@@ -429,6 +429,13 @@ var morphoviewer = ( function( module ) {
     module.Camera.prototype.view = function() {
         return this.viewTransform;
     };
+    
+    /**
+     *@returns {Number} the camera's distance from the origin
+     * */
+    module.Camera.prototype.distanceFromOrigin = function() {
+        return this.radius;
+    };
 
     /**
      * @param {Number} fov the vertical field of view, in radians
