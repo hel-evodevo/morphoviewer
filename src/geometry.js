@@ -5,7 +5,7 @@ var morphoviewer = ( function( module ) {
      * Calculates the rotation matrix from the normalized orientation vector s, 
      * to the normalized orientation vector t.
      * */
-    module.rotationMatrix = function( s, t ) {
+    module.rotationMatrix4 = function( s, t ) {
         var v = vec3.cross( vec3.create(), s, t );
         var vx = v[0];
         var vy = v[1];
@@ -50,6 +50,14 @@ var morphoviewer = ( function( module ) {
 
     module.Plane.prototype.flip = function() {
         vec3.subtract( this.planeVec1, vec3.fromValues( 0.0, 0.0, 0.0 ), this.planeVec1 );
+        this.normal = vec3.normalize(
+            vec3.create(),
+            vec3.cross(
+                vec3.create(),
+                this.planeVec1,
+                this.planeVec2
+            )
+        );
     };
 
     module.Plane.prototype.getNormal = function() {
