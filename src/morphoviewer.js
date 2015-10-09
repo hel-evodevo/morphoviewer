@@ -181,7 +181,7 @@ var morphoviewer = ( function( tools ) {
         this.plane = new tools.Plane(
             vec3.fromValues( 0.0, 0.0, 0.0 ),
             vec3.fromValues( 1.0, 0.0, 0.0 ),
-            vec3.fromValues( 0.0, 0.0, -1.0 )
+            vec3.fromValues( 0.0, 1.0, 0.0 )
         );
 
         //construct render command
@@ -819,16 +819,41 @@ var morphoviewer = ( function( tools ) {
         // the rotation matrix is defined in geometry.js
         this.planeRotationMatrix = mat4.invert(
             mat4.create(),
-            tools.rotationMatrix(
+            tools.rotationMatrix4(
                 vec3.fromValues( 0.0, 0.0, -1.0 ),
                 this.camera.forward()
-            ) 
+            )
+        );
+        // we need to set the mathematical plane to the rotated coordinates
+        this.plane = new tools.Plane(
+            vec3.transformMat4( vec3.create(), vec3.fromValues(0.0, 0.0, 0.0), this.planeRotationMatrix ),
+            vec3.transformMat4( vec3.create(), vec3.fromValues(1.0, 0.0, 0.0), this.planeRotationMatrix ),
+            vec3.transformMat4( vec3.create(), vec3.fromValues(0.0, 1.0, 0.0), this.planeRotationMatrix)
         );
     };
-
-    module.Viewer.prototype.translateOpcSelectionPlane = function() {
-        //
+    
+    /*
+     * @brief Translate the OPC selection plane in a positive or negative direction along the plane normal.
+     * @param dir {Number} A positive or negative number, indicating the positive or negative direction along the plane normal.
+     **/
+    module.Viewer.prototype.translateOpcSelectionPlane = function( dir ) {
+        var normal = this.plane.getNormal();
+        //console.log( vec3.str( normal ) ) ;
+        vec3.normalize( normal, normal );
+        vec3.scale( normal, normal, 0.9*dir );
+        mat4.multiply(
+            this.planeTranslationMatrix,
+            this.planeTranslationMatrix,
+            mat4.fromTranslation(
+                mat4.create(),
+                normal
+            )
+        );
     };
+    
+    module.Viewer.prototype.flipOpcSelectionPlane = function() {
+        this.plane.flip();
+    }
     
     module.Viewer.prototype.modelArea = function() {
         return this.totalModelArea;
