@@ -61,7 +61,7 @@ var morphoviewer = ( function( module ) {
     };
 
     module.Plane.prototype.getNormal = function() {
-        return this.normal;
+        return vec3.clone( this.normal );
     };
 
     return module;

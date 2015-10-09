@@ -831,14 +831,13 @@ var morphoviewer = ( function( tools ) {
             vec3.transformMat4( vec3.create(), vec3.fromValues(0.0, 1.0, 0.0), this.planeRotationMatrix)
         );
     };
-    
+
     /*
      * @brief Translate the OPC selection plane in a positive or negative direction along the plane normal.
      * @param dir {Number} A positive or negative number, indicating the positive or negative direction along the plane normal.
      **/
     module.Viewer.prototype.translateOpcSelectionPlane = function( dir ) {
         var normal = this.plane.getNormal();
-        //console.log( vec3.str( normal ) ) ;
         vec3.normalize( normal, normal );
         vec3.scale( normal, normal, 0.9*dir );
         mat4.multiply(
