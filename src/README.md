@@ -28,9 +28,21 @@ There are four modules:
 
 ## `morphoviewer.js`
 
+This is module takes control over the user-defined canvas element. It renders user-specified data in the canvas element and handles any user-input over the element.
+
+Here are the following assumptions that are made in `morphoviewer.js`.
+1. We render only one model at a time.
+2. All models shall have the same data present after parsing.
+
+These assumptions allow us to use a few different variables, defined at the top of the morphoviewer closure, to handle the rendering of the model.
+
 ## `file_io.js`
 
-This file contains functions for reading a number of different file formats.
+This file contains functions for reading a number of different file formats. In practise, PLY support is the most important, as it is the format that most of the 3d scans are going to be in.
+
+The entry point for loading a PLY scan is `io.loadPLY`. It calls the function `parsePLY` which handles the parsing. It does so by parsing the PLY header, which returns PLY element (vertices and triangles are stored as elemnets) parser objects. The function then parses the data segment of the file, which may be ASCII or in binary. Note that binary PLY files can stored in little or big endian format.
+
+`file_io.js` parsers Wavefront .OBJ, STL and point cloud files as well. OBJ and point clouds were used early on for testing purposes, but they're not very good for storing large 3d scans. Binary PLY is a much more compact file format than either one of those. STL files are used widely for 3d printing, but they don't store any triangulation information; the triangulation information would have to be recalculated on loading, and is probably too much for javascript to handle.
 
 ## `geometry.js`
 
