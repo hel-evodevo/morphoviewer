@@ -30,12 +30,16 @@ var morphoviewer = ( function( tools ) {
         // Model state
         /////////////////////////////////////////////////////////////////////////////////////////
 
+         //build an empty mesh so that we have a valid array buffer when the shaders initialize
+        this.mesh = new tools.Mesh( this.gl );
+        this.mesh.build( {vertex:[], normal:[], curvature:[], orientation:[]} );
+         
         /*
          * Cache the mesh data for modification and creating new mesh objects during runtime
          * This object has the same structure as the object that tools.Mesh.build( obj ) takes
          * as an argument.
          * 
-         * The following mesh cache fields are used throughout the project:
+         * The following mesh cache fields are used throughout the project (see e.g. module.loadData):
          * {
          * vertex: [],
          * normal: [],
@@ -45,14 +49,18 @@ var morphoviewer = ( function( tools ) {
          * wrappedNormal: [],
          * adjacencyList: []
          * }
-         * */
+         * */ 
         this.meshCache = { vertex: [], normal: [], curvature: [], orientation: [] };
+        
+        // use this to store a camera location
+        // we need the camera location, when we e.g. recalculate the orientations, 
+        // or get a new OPC value
         this.cameraCache = mat4.create();
         
         //this is the model view matrix of the mesh.
         //the tracking ball stays centered at (0, 0, 0) at all times and thus
         //doesn't have it's own matrix
-        this.modelView = mat4.create();	//identity matrix, models centered at (0, 0, 0)
+        this.modelView = mat4.create();	//identity matrix, model centered at (0, 0, 0)
 
         this.opcAreaLimit = 0.3;  // this is a percentage
         this.totalModelArea = 1.0;
@@ -63,10 +71,6 @@ var morphoviewer = ( function( tools ) {
         //target position is for smooth motion interpolation
         this.position = vec3.fromValues( 0.0, 0.0, 0.0 );
         this.targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
-        
-        //build an empty mesh so that we have a valid array buffer when the shaders initialize
-        this.mesh = new tools.Mesh( this.gl );
-        this.mesh.build( {vertex:[], normal:[], curvature:[], orientation:[]} );
 
         /////////////////////////////////////////////////////////////////////////////////////////
         // Event handling
@@ -189,7 +193,7 @@ var morphoviewer = ( function( tools ) {
         this.timer = new Date();
 
         //build the trackball before shaders are initialized
-        this.trackball = new tools.Trackball( this.gl );////////////////////////////////////////////////////////////
+        this.trackball = new tools.Trackball( this.gl );
 
         var vertexData = [
             -1.0, 1.0, 0.0,
