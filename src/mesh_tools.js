@@ -262,17 +262,6 @@ var morphoviewer = ( function( module ) {
      * @returns {Array} an array which matches a vertex array with each vertex given in the input array.
      */
     module.vertexNormals = function( verts, ind, adjacency ) {
-        /*construct adjacency list*/
-        /*var adjacency = new Array( verts.length );	//store neighboring points
-        for ( var i = 0; i < verts.length; i++ ) {
-            adjacency[i] = [];
-        }
-        for ( var i = 0; i < ind.length; i++ ) {
-            adjacency[ ind[i][0] ].push( ind[i][1], ind[i][2] );
-            adjacency[ ind[i][1] ].push( ind[i][0], ind[i][2] );
-            adjacency[ ind[i][2] ].push( ind[i][0], ind[i][1] );
-        }*/
-
         var faceVecs = faceVectors( verts, ind );
         var norms = new Array( verts.length );
 
