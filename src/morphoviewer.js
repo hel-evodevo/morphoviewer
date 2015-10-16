@@ -5,21 +5,12 @@ var morphoviewer = ( function( tools ) {
     var module = {};
 
     module.Viewer = function( id ) {
-
+        
         var self = this;
 
-        this.fps = 40.0;
-        this.renderFunctor = function() {};
-
-        //this is the model view matrix of the mesh.
-        //the tracking ball stays centered at (0, 0, 0) at all times and thus
-        //doesn't have it's own matrix
-        this.modelView = mat4.create();	//identity matrix, models centered at (0, 0, 0)
-
-        //position parameters of mesh
-        //target position is for smooth motion interpolation
-        this.position = vec3.fromValues( 0.0, 0.0, 0.0 );
-        this.targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
+        /////////////////////////////////////////////////////////////////////////////////////////
+        // Global viewer state
+        /////////////////////////////////////////////////////////////////////////////////////////
 
         //tracking ball
         this.showTrackball = true;
@@ -29,19 +20,63 @@ var morphoviewer = ( function( tools ) {
          * */
         this.timer = null;
         this.endTime = null;
+        
+        /**
+         * The target framerate to render at.
+         */
+        this.fps = 40.0;
+        
+        /////////////////////////////////////////////////////////////////////////////////////////
+        // Model state
+        /////////////////////////////////////////////////////////////////////////////////////////
 
+         //build an empty mesh so that we have a valid array buffer when the shaders initialize
+        this.mesh = new tools.Mesh( this.gl );
+        this.mesh.build( {vertex:[], normal:[], curvature:[], orientation:[]} );
+         
         /*
          * Cache the mesh data for modification and creating new mesh objects during runtime
          * This object has the same structure as the object that tools.Mesh.build( obj ) takes
          * as an argument.
-         * */
+         * 
+         * The following mesh cache fields are used throughout the project (see e.g. module.loadData):
+         * {
+         * vertex: [],
+         * normal: [],
+         * curvature: [],
+         * orientation: [],
+         * wrappedVertex: [],
+         * wrappedNormal: [],
+         * adjacencyList: []
+         * }
+         * */ 
         this.meshCache = { vertex: [], normal: [], curvature: [], orientation: [] };
+        
+        // use this to store a camera location
+        // we need the camera location, when we e.g. recalculate the orientations, 
+        // or get a new OPC value
         this.cameraCache = mat4.create();
+        
+        //this is the model view matrix of the mesh.
+        //the tracking ball stays centered at (0, 0, 0) at all times and thus
+        //doesn't have it's own matrix
+        this.modelView = mat4.create();	//identity matrix, model centered at (0, 0, 0)
 
         this.opcAreaLimit = 0.3;  // this is a percentage
         this.totalModelArea = 1.0;
+        
+        this.renderFunctor = function() {};
 
-        /*
+        //position parameters of mesh
+        //target position is for smooth motion interpolation
+        this.position = vec3.fromValues( 0.0, 0.0, 0.0 );
+        this.targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
+
+        /////////////////////////////////////////////////////////////////////////////////////////
+        // Event handling
+        /////////////////////////////////////////////////////////////////////////////////////////
+
+        /**
          * This is for storing the mouse's current and previous coordinates. Used in tracking mouse
          * motion deltas.
          * */
@@ -155,10 +190,6 @@ var morphoviewer = ( function( tools ) {
         var aspectRatio = this.canvas.clientWidth / this.canvas.clientHeight;
         this.camera = new tools.Camera( Math.PI * 60.0 / 180.0, aspectRatio, 0.01, 1000.0 );
 
-        //build an empty mesh so that we have a valid array buffer when the shaders initialize
-        this.mesh = new tools.Mesh( this.gl );
-        this.mesh.build( {vertex:[], normal:[], curvature:[], orientation:[]} );
-
         this.timer = new Date();
 
         //build the trackball before shaders are initialized
@@ -178,11 +209,16 @@ var morphoviewer = ( function( tools ) {
         this.planeRotationMatrix = mat4.create();
         this.planeTranslationMatrix = mat4.create();
         this.planeScalingMatrix = mat4.create();
+        
         this.plane = new tools.Plane(
             vec3.fromValues( 0.0, 0.0, 0.0 ),
             vec3.fromValues( 1.0, 0.0, 0.0 ),
             vec3.fromValues( 0.0, 1.0, 0.0 )
         );
+        
+        /////////////////////////////////////////////////////////////////////////////////////////
+        // Rendering loop
+        /////////////////////////////////////////////////////////////////////////////////////////
 
         //construct render command
         var drawScene = function() {
