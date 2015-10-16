@@ -36,7 +36,7 @@ Here are the following assumptions that are made in `morphoviewer.js`.
 
 These assumptions allow us to use a few different variables, defined at the top of the morphoviewer closure, to handle the rendering of the model.
 
-### Rendering state of the model
+#### Rendering state of the model
 
 The model state consits of many different variables. These are, more or less in order of appearance:
 
@@ -71,11 +71,15 @@ The `meshCache` fields have the following formats.
 
 `position` and `targetPosition` are used to store the current position of the model. The event handlers, such as handling click and drag of the left mouse button, will change `targetPosition`. The current `position` is linearly interpolated to `targetPosition` as a function of time, creating a smoother transition. In the `drawScene` function, `modelView` is updated to correspond to the translation to `position`.
 
-### Event handling
+#### Event handling
 
 Three types of events are captured over the canvas element. Mouse left-click, mouse right click, and mouse wheel scroll events. Note that opening the context menu (by right-clicking on a page) is disabled over the canvas element that `morphoviewer.js` controls. Mouse wheel movement is not captured outside of the canvas element.
 
 The mouse movement delta (the change in mouse coordinates) are needed for camera movement. The current mouse coordinates, the previous frame's mouse coordinates, and the resulting movement deltas are stored in the `mouse` object.
+
+#### Camera orientation
+
+The camera is an instance of the `Camera` prototype (see `graphics.js` for the definition). The camera is stored in the `camera` variable. The event handlers mentioned previously delegate the movement deltas to the camera, which handles its own orientation.
 
 ## `file_io.js`
 
@@ -89,7 +93,37 @@ The entry point for loading a PLY scan is `io.loadPLY`. It calls the function `p
 
 ## `graphics.js`
 
-Defines a number of WebGL wrapper classes used by morphoviewer, as well as a few useful functions.
+Defines a number of wrappers over WebGL object types, as well as a few useful data structures and functions.
+
+The first part of the file contains boiler plate for reading shaders from different sources.
+
+#### Shader programs
+
+`ShaderProgram` is a prototype class wrapping the WebGL shader program object; it represents a complete program running on the GPU and is composed of shader stages linked together. Currently, the program supports two shader stages: the vertex and fragment shader stages (you can see this hardcoded behavior in `Program.prototype.programFromString`). Note that in order for a shader to be used, it needs to be bound to the context. Normally you would do that by calling `gl.useProgram( object )`, but `Program` does that for you when you call the `use` method on one of its instances.
+
+Shader program attribute and uniform ids can be accessed by calling the `attribute` and `uniform` methods. They take the name of the attribute or uniform, as written in the shader, and return the WebGL object representation.
+
+Shader program uniforms can be set by calling `setUniform`.
+
+#### GPU buffer objects
+
+The `BufferObject` prototype is very simple; it wraps a WebGL bufferobject, makes binding simpler (by not having to remember the target each time you bind and unbind), and makes storing the data simpler.
+
+#### Mesh objects
+
+Mesh objects are instances of the `Mesh` prototype. A `Mesh` object wraps the same object as `BufferObject` does, but it has more methods, and can only bind to the `gl.ARRAY_BUFFER` target.
+
+Meshes are constructed using the `build` method. You have to pass the method a single parameter: the `meshCache` object from `morphoviewer.js`. The various arrays in the `meshCache` are merged into one big array, and sent to the GPU.
+
+Just like the `BufferObject` prototype, you must `bind` and `unbind` the mesh before and after using it.
+
+#### Camera
+
+The camera stores the parameters for a perspective viewing frustum, for orthographic projection, and spherical coordinates so that it may orbit around a point.
+
+The camera can calculate it's local coordinate system. Call the `forward`, `up`, and `right` methods to get the corresponding normalized vectors. The `forward` vector is always parallel to the vector connecting the camera's current position, and the camera's focal point. The `right` vector is always taken to be perpendicular to `forward` and the *y* axis. The `up` vector is simply the vector cross product of `right` and `forward`.
+
+The camera's projection state can be changed by calling the `viewAsOrtho` and `viewAsPerspective` methods.
 
 ## `mesh_tools.js`
 

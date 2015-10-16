@@ -421,7 +421,9 @@ var morphoviewer = ( function( module ) {
     };
 
     /*
-    * This takes wrapped vertices as an argument
+    * This takes wrapped vertices as an argument.
+    *
+    * Does not modify any of the arguments!
     * */
     module.modelArea = function( verts, tris ) {
         var size = 0.0;

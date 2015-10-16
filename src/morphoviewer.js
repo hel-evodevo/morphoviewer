@@ -71,6 +71,14 @@ var morphoviewer = ( function( tools ) {
         //target position is for smooth motion interpolation
         this.position = vec3.fromValues( 0.0, 0.0, 0.0 );
         this.targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
+        
+        /////////////////////////////////////////////////////////////////////////////////////////
+        // Camera
+        /////////////////////////////////////////////////////////////////////////////////////////
+        
+        //the morphoviewer has only one camera
+        var aspectRatio = this.canvas.clientWidth / this.canvas.clientHeight;
+        this.camera = new tools.Camera( Math.PI * 60.0 / 180.0, aspectRatio, 0.01, 1000.0 );
 
         /////////////////////////////////////////////////////////////////////////////////////////
         // Event handling
@@ -186,15 +194,15 @@ var morphoviewer = ( function( tools ) {
             this.canvas.addEventListener( "onmousewheel", onMouseWheel );
         }
 
-        //the morphoviewer has only one camera
-        var aspectRatio = this.canvas.clientWidth / this.canvas.clientHeight;
-        this.camera = new tools.Camera( Math.PI * 60.0 / 180.0, aspectRatio, 0.01, 1000.0 );
-
         this.timer = new Date();
 
-        //build the trackball before shaders are initialized
+        // build the trackball before shaders are initialized
+        // the trackball is the little three circles you see around the model at all times
         this.trackball = new tools.Trackball( this.gl );
 
+        /**
+         * Build the plane primitives
+         */
         var vertexData = [
             -1.0, 1.0, 0.0,
             1.0, 1.0, 0.0,
