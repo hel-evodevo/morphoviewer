@@ -40,6 +40,7 @@ var morphoviewer = ( function( tools ) {
          * as an argument.
          * 
          * The following mesh cache fields are used throughout the project (see e.g. module.loadData):
+         * The following mesh cache fields are used throughout the project:
          * {
          * vertex: [],
          * normal: [],
@@ -79,7 +80,6 @@ var morphoviewer = ( function( tools ) {
         //the morphoviewer has only one camera
         var aspectRatio = this.canvas.clientWidth / this.canvas.clientHeight;
         this.camera = new tools.Camera( Math.PI * 60.0 / 180.0, aspectRatio, 0.01, 1000.0 );
-
         /////////////////////////////////////////////////////////////////////////////////////////
         // Event handling
         /////////////////////////////////////////////////////////////////////////////////////////
@@ -211,13 +211,18 @@ var morphoviewer = ( function( tools ) {
             -1.0, -1.0, 0.0,
             1.0, -1.0, 0.0
         ];
-        this.showPlane = false;
+        this.showPlane = true;
         this.planeObject = new tools.BufferObject( this.gl, this.gl.ARRAY_BUFFER );
         this.planeObject.dataStore( new Float32Array( vertexData ), this.gl.STATIC_DRAW );
-        this.planeModelMatrix = mat4.fromScaling( mat4.create(), vec3.fromValues( 10.0, 10.0, 10.0 ) );
         this.planeRotationMatrix = mat4.create();
         this.planeTranslationMatrix = mat4.create();
         this.planeScalingMatrix = mat4.create();
+        
+        this.plane = new tools.Plane(
+            vec3.fromValues( 0.0, 0.0, 0.0 ),
+            vec3.fromValues( 1.0, 0.0, 0.0 ),
+            vec3.fromValues( 0.0, 1.0, 0.0 )
+        );
         
         /////////////////////////////////////////////////////////////////////////////////////////
         // Rendering loop
@@ -275,7 +280,17 @@ var morphoviewer = ( function( tools ) {
 
                 self.planeObject.bind();
                 tools.flatShader.camera = self.camera.matrix();
-                tools.flatShader.model = self.planeScalingMatrix;
+                var modelMatrix =  mat4.multiply(
+                    mat4.create(),
+                    self.planeRotationMatrix,
+                    self.planeScalingMatrix
+                );
+                mat4.multiply(
+                    modelMatrix,
+                    self.planeTranslationMatrix,
+                    modelMatrix
+                );
+                tools.flatShader.model = modelMatrix;
                 tools.flatShader.surfaceColor = vec3.fromValues( 0.45, 0.45, 0.7 );
                 tools.flatShader.setUniforms( self.planeProgram );
                 tools.flatShader.setAttributes( self.gl, self.planeProgram );
@@ -837,12 +852,51 @@ var morphoviewer = ( function( tools ) {
     };
 
     module.Viewer.prototype.showOpcSelectionPlane = function() {
-        self.showPlane = true;
+        this.showPlane = true;
     };
 
     module.Viewer.prototype.hideOpcSelectionPlane = function() {
-        self.showPlane = false;
+        this.showPlane = false;
     };
+
+    module.Viewer.prototype.setOpcSelectionPlane = function() {
+        // the rotation matrix is defined in geometry.js
+        this.planeRotationMatrix = mat4.invert(
+            mat4.create(),
+            tools.rotationMatrix4(
+                vec3.fromValues( 0.0, 0.0, -1.0 ),
+                this.camera.forward()
+            )
+        );
+        // we need to set the mathematical plane to the rotated coordinates
+        this.plane = new tools.Plane(
+            vec3.transformMat4( vec3.create(), vec3.fromValues(0.0, 0.0, 0.0), this.planeRotationMatrix ),
+            vec3.transformMat4( vec3.create(), vec3.fromValues(1.0, 0.0, 0.0), this.planeRotationMatrix ),
+            vec3.transformMat4( vec3.create(), vec3.fromValues(0.0, 1.0, 0.0), this.planeRotationMatrix)
+        );
+    };
+
+    /*
+     * @brief Translate the OPC selection plane in a positive or negative direction along the plane normal.
+     * @param dir {Number} A positive or negative number, indicating the positive or negative direction along the plane normal.
+     **/
+    module.Viewer.prototype.translateOpcSelectionPlane = function( dir ) {
+        var normal = this.plane.getNormal();
+        vec3.normalize( normal, normal );
+        vec3.scale( normal, normal, 0.9*dir );
+        mat4.multiply(
+            this.planeTranslationMatrix,
+            this.planeTranslationMatrix,
+            mat4.fromTranslation(
+                mat4.create(),
+                normal
+            )
+        );
+    };
+    
+    module.Viewer.prototype.flipOpcSelectionPlane = function() {
+        this.plane.flip();
+    }
     
     module.Viewer.prototype.modelArea = function() {
         return this.totalModelArea;
