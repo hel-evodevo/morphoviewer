@@ -40,6 +40,7 @@ var morphoviewer = ( function( tools ) {
          * as an argument.
          * 
          * The following mesh cache fields are used throughout the project (see e.g. module.loadData):
+         * The following mesh cache fields are used throughout the project:
          * {
          * vertex: [],
          * normal: [],
@@ -71,6 +72,10 @@ var morphoviewer = ( function( tools ) {
         //target position is for smooth motion interpolation
         this.position = vec3.fromValues( 0.0, 0.0, 0.0 );
         this.targetPosition = vec3.fromValues( 0.0, 0.0, 0.0 );
+        
+        //build an empty mesh so that we have a valid array buffer when the shaders initialize
+        this.mesh = new tools.Mesh( this.gl );
+        this.mesh.build( {vertex:[], normal:[], curvature:[], orientation:[]} );
 
         /////////////////////////////////////////////////////////////////////////////////////////
         // Event handling
@@ -193,7 +198,7 @@ var morphoviewer = ( function( tools ) {
         this.timer = new Date();
 
         //build the trackball before shaders are initialized
-        this.trackball = new tools.Trackball( this.gl );
+        this.trackball = new tools.Trackball( this.gl );////////////////////////////////////////////////////////////
 
         var vertexData = [
             -1.0, 1.0, 0.0,
