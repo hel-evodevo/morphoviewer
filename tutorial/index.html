@@ -1,0 +1,408 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Embedding morphoviewer</title>
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/idea.min.css" rel="stylesheet" >
+	<style type="text/css">
+		.text-box {
+		    background-color: #DAE2E6;
+		    padding: 20px;
+		    border: 1px solid #A0A5A8;
+	 	}
+	</style>
+</head>
+
+<body>
+	<script type="text/javascript" src="https://rawgit.com/Nelarius/Morphoviewer/master/distribution/morphoviewer.min.js"></script>
+	<!--script type="text/javascript" src="https://cdn.rawgit.com/Nelarius/Morphoviewer/master/distribution/morphoviewer.min.js"></script-->
+	<!--script type="text/javascript" src="morphoviewer.min.js"-->
+	
+	</script>
+    	<div style="width: 960px;min-height: 100%;height: auto !important;height: 100%;margin: 0 auto -90px;">
+		<div style="float: left;width: 900px;padding-left: 0;padding-right: 30px;">
+			<h1>Embedding morphoviewer in an html document</h1>
+			<h2>The WebGL canvas & morphoviewer.js</h2>
+			
+			<p>Included within the new HTML5 standard is the <code>canvas</code> element. This element
+			essentially is an OpenGL viewport, within your HTML document. We need to tell the viewport what to render, and we do
+			that by using the javascript bindings to OpenGL, known as the WebGL framework.</p>
+			
+			<p>Morphoviewer is essentially a javascript file which sends data to the canvas element, and tells
+			the element how to render the data.</p>
+			
+			<p>I will first develop a working example here. At the bottom of this page, I will include the list of functions used, and some notes on accepted input file types.</p>
+			
+			<h2>Embedding a WebGL canvas element</h2>
+			<p>We're going to create a minimal html document containing the canvas element and use most of morphoviewer's features on it. 
+			The following HTML creates a WebGL canvas within a small div-box.</p>
+			<pre>
+			<code class="xml">
+&lt;html&gt;
+&lt;head&gt;	
+  &lt;meta charset=&quot;UTF-8&quot;&gt;
+  &lt;style&gt;
+  .box {
+    width: 700px;
+    padding-left: 0;
+    padding-right: 30px;
+    background-color: #DAE2E6;
+    padding: 20px;
+    border: 1px solid #A0A5A8;
+  }
+  &lt;/style&gt;
+&lt;/head&gt;
+
+
+&lt;body&gt;
+  &lt;div class=&quot;box&quot;&gt;
+    &lt;canvas width=&quot;640&quot; height=&quot;400&quot; id=&quot;testcanvas&quot;&gt;
+      Your browser doesn't appear to support the HTML5 canvas element.
+      Consider updating your browser!
+    &lt;/canvas&gt;
+  &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+			</code>			
+			</pre>
+			
+			<p>We set the canvas' dimensions using the <code>width</code>, <code>height</code> attributes. We must supply the <code>id</code> attribute a name, for reasons which I will
+			explain in a moment. The message contained between the <code>canvas</code> tags is displayed if the user's browser does not support the 
+			WebGL framework. This happens on some older smartphones and older versions of a browser, e.g. on a Mac OSX which hasn't been 
+			updated in a while. This HTML code should create an empty gray box (due to our CSS class <code>box</code>), approximately dimensioned <code>640 x 400</code>:</p>
+			<div class="text-box">
+				<canvas width="640" height="400">
+					Your browser doesn't appear to support the HTML5 canvas element.
+               Consider updating your browser!				
+				</canvas>
+			</div>
+			
+			<p>The canvas is currently an invisible box, as we're not doing anything with it yet.</p>
+			
+			<h2>Adding morphoviewer to the canvas</h2>
+			
+			<p>Next, we're going to activate <code>morphoviewer.js</code>. The minified, single-file source is available at
+			<code>https://cdn.rawgit.com/Nelarius/Morphoviewer/master/distribution/morphoviewer.min.js</code>. Whenever I update the library, the code at
+			this link is updated automatically as well, although not instantaneously.</p>
+			
+  
+  			<p>We need to include the script, and create our viewer. We do this by adding the following code after the <code>canvas</code> tags,
+			<pre>
+			<code>
+&lt;script&gt;
+  var viewer = new morphoviewer.Viewer("testcanvas");
+  viewer.setBackgroundColor([0.854902,0.886275,0.901961]);
+  viewer.view( "https://cdn.rawgit.com/Nelarius/Nelarius.github.io/master/obj/akodon.ply" );
+&lt;/script&gt;
+			</code>			
+			</pre>
+			and adding,
+			<pre>
+			<code>
+&lt;script src=&quot;https://cdn.rawgit.com/Nelarius/Morphoviewer/master/distribution/morphoviewer.min.js&quot;&gt;&lt;/script&gt;			
+			</code>			
+			</pre>
+			just after the first <code>body</code> tag. What we've done is construct the morphoviewer into the <code>viewer</code> variable. The constructor 
+			of the viewer takes a single string parameter. This is the canvas element's id string; the morphoviewer has effectively taken over ownership of this canvas element. 
+			There can be multiple canvas elements in the same HTML document, which is why we need to identify the canvas element with an id. 
+			This is also why the viewer is an object: we can give each uniquely identified canvas element it's own independent viewer (which is what I've done in this tutorial document). 
+			After constructing the viewer, we set the background color of the viewer to the background color of the div-box. The background color is specified as an array of three 
+			numbers in the range 0..1. Finally, we tell the viewer to load a file and display it, using the <code>view</code> method. The data file is specified as a url. Valid data types are
+            STL, PLY, and text CSV files.
+  			</p>
+  			
+  			<p>Our HTML document now looks like:
+			<pre>
+			<code class="xml">
+&lt;html&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;UTF-8&quot;&gt;
+  &lt;style&gt;
+  .box {
+    width: 700px;
+    padding-left: 0;
+    padding-right: 30px;
+    background-color: #DAE2E6;
+    padding: 20px;
+    border: 1px solid #A0A5A8;
+  }
+  &lt;/style&gt;
+&lt;/head&gt;
+
+
+&lt;body&gt;
+  &lt;script src=&quot;https://cdn.rawgit.com/Nelarius/Morphoviewer/master/distribution/morphoviewer.min.js&quot;&gt;&lt;/script&gt;	
+  &lt;div class=&quot;box&quot;&gt;
+    &lt;canvas width=&quot;640&quot; height=&quot;400&quot; id=&quot;testcanvas&quot;&gt;
+      Your browser doesn't appear to support the HTML5 canvas element.
+      Consider updating your browser!
+    &lt;/canvas&gt;
+    &lt;script&gt;
+      var viewer = new morphoviewer.Viewer("testcanvas");
+      viewer.setBackgroundColor([0.854902,0.886275,0.901961]);
+      viewer.view( "https://cdn.rawgit.com/Nelarius/Nelarius.github.io/master/obj/akodon.ply" );
+    &lt;/script&gt;
+  &lt;/div&gt;	
+&lt;/body&gt;
+&lt;/html&gt;
+			</code>			
+			</pre>  			
+  			</p>
+  			
+  			<p>This should give the following result:</p>
+			 			
+  			<div class="text-box">
+				<canvas width="840" height="400" id="canvas1">
+					Your browser doesn't appear to support the HTML5 canvas element. Consider updating your browser!				
+				</canvas>
+			</div>
+			
+			<script type="text/javascript">
+				var viewer1 = new morphoviewer.Viewer( "canvas1" );
+				viewer1.setBackgroundColor( [0.854902,0.886275,0.901961] );
+				viewer1.view( "https://cdn.rawgit.com/Nelarius/Nelarius.github.io/master/obj/akodon.ply");
+			</script>
+			
+			<p>Note that you can rotate the view while holding the left mouse button down, zoom in and out by rotating the scroll wheel,
+			 and translate the model by holding the right mouse button down. The viewer automatically handles user input over the canvas element it owns.
+			 Note that the context menu (right click) is deactivated over the canvas element. Mouse input is not captured outside of the canvas element.</p>
+			 
+			<h2>Controlling the view</h2>
+			
+			<p>So far we've simply created a viewer and given it data. Next, we would like to change the state of the viewer. Changing state can include e.g. switching the 
+			projection mode between perspective and orthographic projection, changing the shader mode between wireframe, light, and surface color shading. We've actually already seen one
+			such state function: <code>viewer.setBackgroundColor</code>.</p>
+			
+			<p>I've handled input by binding these javascript function calls to buttons. I'm sure other input schemes could be invented as well. For the sake of example, I
+			will list the code to create a button-based control scheme very similar to the one at <a href="https://nelarius.github.io/">nelarius.github.io</a>.</p>
+
+			<p>First, we're going to switch between projection modes. <code>morphoviewer.js</code> uses orthographic projection as it's default. Orthographic projection has no depth,
+			and is therefore well-suited for judging shapes. Perspective projection is available as well, however. We will create two buttons, and a slider for controlling the
+			field-of-view of the perspective projection:</p>
+			
+			<pre>
+			<code class="xml">
+&lt;h3&gt;Projection&lt;/h3&gt;
+&lt;button onclick=&quot;viewer.viewOrtho();&quot;&gt;ortho&lt;/button&gt;
+&lt;button onclick=&quot;viewer.viewPerspective();&quot;&gt;perspective&lt;/button&gt;
+&lt;input id=&quot;fov&quot; type=&quot;range&quot; min=&quot;0.1&quot; max=&quot;100&quot; step=&quot;0.1&quot; value=&quot;67&quot; oninput=&quot;viewer.setFOV(this.value)&quot;&gt;
+			</code>			
+			</pre>
+			
+			<p>The field-of-view slider affects only the perspective projection mode. It works like a zoom lens: the smaller the field-of-view, the more "zoomed in" we are to the image.
+			The more zoomed in we are, the less depth distortion there is in the image. Field-of-view values above 80 correspond to a fish-eye lens on a camera and distort the image a lot.</p>
+			
+			<p>Once we've set our projection, we can change the shading of the object. We want to switch between the wireframe view, the illuminated view, 
+			the curvature-colored view, and the orientation-colored view:</p>
+			
+			<pre><code>
+&lt;h3&gt;Shading&lt;/h3&gt;
+&lt;button onclick=&quot;viewer.viewWireframe()&quot;&gt;wireframe&lt;/button&gt;
+&lt;button onclick=&quot;viewer.viewSurfaceCurvature();&quot;&gt;curvature&lt;/button&gt;
+&lt;button onclick=&quot;viewer.calculateOrientation(); viewer.viewSurfaceOrientation();&quot;&gt;orientation&lt;/button&gt;
+&lt;button onclick=&quot;viewer.viewHemispherical()&quot;&gt;illumination&lt;/button&gt;
+			</code></pre>
+			
+			<p>Displaying the orientation is a two-step process. First, we have to calculate the colors for our specific camera orientation. Then, we tell the viewer to 
+			display the orientation. The name <code>viewHemispherical</code> sounds scary, but it just refers to the hemispherical lighting model used to calculate the illumination 
+			on the surface of the model.</p>
+			
+			<p>The light illuminating the model can be rotated about the object. This can be controlled by adding, e.g. the following sliders:</p>
+			
+			<pre>
+			<code class="xml">
+&lt;h3&gt;Illumination controls&lt;/h3&gt;
+&lt;input id=&quot;polar&quot; type=&quot;range&quot; min=&quot;0.1&quot; max=&quot;3.14&quot; step=&quot;0.1&quot; value=&quot;1.57&quot; oninput=&quot;viewer.setLightPolarAngle(this.value)&quot;&gt;
+&lt;input id=&quot;azimuth&quot; type=&quot;range&quot; min=&quot;0.1&quot; max=&quot;6.283&quot; step=&quot;0.1&quot; value=&quot;0&quot; oninput=&quot;viewer.setLightAzimuthalAngle(this.value)&quot;&gt;
+			</code>
+			</pre>
+			
+			<p>The <code>polar</code> and <code>azimuth</code> attributes refer to the polar and azimuthal angles of the 
+			<a href="http://en.wikipedia.org/wiki/Spherical_coordinate_system" >spherical coordinate system</a>. Don't worry if this seems confusing, I don't really think these need to be
+			included in the final user interface. The sliders are useful in finding which lighting settings look good, however.</p>
+			
+			<p>We can show and hide the tracking ball with the following bit of javascript:</p>
+			<pre>
+			<code class="xml">
+&lt;h3&gt;Tracking ball&lt;/h3&gt;
+&lt;script type="text/javascript"&gt;
+  function toggle() {
+    var element = document.getElementById("togglebutton");       
+      if ( element.value == "hide" ) {
+        element.value = "show";
+        viewer.hideTrackingball();
+      } else if ( element.value == "show") {
+        element.value = "hide";
+        viewer.showTrackingball();
+      }
+  }
+&lt;/script&gt;
+&lt;input type="button" value="hide" id="togglebutton" onclick="toggle();"&gt;&lt;/input&gt;
+			</code>			
+			</pre>
+			
+			<p>Finally, we can switch to pre-programmed views using the following buttons:</p>
+			<pre><code class="xml">
+&lt;h3&gt;Views&lt;/h3&gt;
+&lt;button onclick=&quot;viewer.viewLeft();&quot;&gt;left&lt;/button&gt;
+&lt;button onclick=&quot;viewer.viewRight();&quot;&gt;right&lt;/button&gt;
+&lt;br/&gt;
+&lt;button onclick=&quot;viewer.viewTop();&quot;&gt;top&lt;/button&gt;
+&lt;button onclick=&quot;viewer.viewBottom();&quot;&gt;bottom&lt;/button&gt;
+&lt;br/&gt;
+&lt;button onclick=&quot;viewer.viewFront();&quot;&gt;front&lt;/button&gt;
+&lt;button onclick=&quot;viewer.viewBack();&quot;&gt;back&lt;/button&gt;
+			</code></pre>
+			
+			<p>Adding these buttons to the box should result in the following:</p>
+			
+			<div class="text-box">
+				<canvas width="840" height="400" id="canvas2">
+					Your browser doesn't appear to support the HTML5 canvas element.
+               Consider updating your browser!				
+				</canvas>
+				
+				<script type="text/javascript">
+				var viewer2 = new morphoviewer.Viewer( "canvas2" );
+				viewer2.setBackgroundColor( [0.854902,0.886275,0.901961] );
+				viewer2.view( "https://cdn.rawgit.com/Nelarius/Nelarius.github.io/master/obj/akodon.ply");
+				</script>
+				
+				<h3>Projection<h3>
+				<button onclick="viewer2.viewOrtho();">ortho</button>
+			   <button onclick="viewer2.viewPerspective();">perspective</button>
+			   <input id="fov" type="range" min="0.1" max="100" step="0.1" value="67" oninput="viewer2.setFOV(this.value);">
+			   <h3>Shading</h3>
+			   <button onclick="viewer2.viewWireframe();">wireframe</button>
+		    	<button onclick="viewer2.viewSurfaceCurvature();">curvature</button>
+		    	<button onclick="viewer2.calculateOrientation(); viewer2.viewSurfaceOrientation();">orientation</button>
+		    	<button onclick="viewer2.viewHemispherical();">illuminated</button>
+		    	<h3>Illumination controls<h3>
+			    <input id="polar" type="range" min="0" max="3.142" step="0.1" value="1.57" oninput="viewer2.setLightPolarAngle(this.value);">
+			    <input id="azimuth" type="range" min="0" max="6.283" step="0.1" value="0" oninput="viewer2.setLightAzimuthalAngle(this.value);">
+			    <h3>Tracking ball</h3>
+			    <script type="text/javascript">
+			        function toggle() {
+			            var element = document.getElementById("togglebutton");
+			            if ( element.value == "hide" ) {
+			                element.value = "show";
+			                viewer2.hideTrackingball();
+			            } else if ( element.value == "show") {
+			                element.value = "hide";
+			                viewer2.showTrackingball();
+			            }
+			        }
+			    </script>
+			    <input type="button" value="hide" id="togglebutton" onclick="toggle();"></input>
+			    <h3>Views</h3>
+			    <button onclick="viewer2.viewLeft();">left</button>
+			    <button onclick="viewer2.viewRight();">right</button>
+			    <br/>
+			    <button onclick="viewer2.viewTop();">top</button>
+			    <button onclick="viewer2.viewBottom();">bottom</button>
+			    <br/>
+			    <button onclick="viewer2.viewFront();">front</button>
+			    <button onclick="viewer2.viewBack();">back</button>
+			</div>
+			
+			<p>The full source code that we've developed is included below.</p>
+			<pre><code class="xml">
+&lt;html&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;UTF-8&quot;&gt;
+  &lt;style&gt;
+  .box {
+    width: 700px;
+    padding-left: 0;
+    padding-right: 30px;
+    background-color: #DAE2E6;
+    padding: 20px;
+    border: 1px solid #A0A5A8;
+  }
+  &lt;/style&gt;
+&lt;/head&gt;
+
+
+&lt;body&gt;
+  &lt;script src=&quot;https://cdn.rawgit.com/Nelarius/Morphoviewer/master/distribution/morphoviewer.min.js&quot;&gt;&lt;/script&gt;	
+  &lt;div class=&quot;box&quot;&gt;
+    &lt;canvas width=&quot;640&quot; height=&quot;400&quot; id=&quot;testcanvas&quot;&gt;
+      Your browser doesn't appear to support the HTML5 canvas element.
+      Consider updating your browser!
+    &lt;/canvas&gt;
+    &lt;script&gt;
+      var viewer = new morphoviewer.Viewer("testcanvas");
+      viewer.setBackgroundColor([0.854902,0.886275,0.901961]);
+      viewer.view( "https://cdn.rawgit.com/Nelarius/Nelarius.github.io/master/obj/akodon.ply" );
+    &lt;/script&gt;
+    
+    &lt;h3&gt;Projection&lt;/h3&gt;
+    &lt;button onclick=&quot;viewer.viewOrtho();&quot;&gt;ortho&lt;/button&gt; 
+    &lt;button onclick=&quot;viewer.viewPerspective();&quot;&gt;perspective&lt;/button&gt;
+    &lt;input id=&quot;fov&quot; type=&quot;range&quot; min=&quot;0.1&quot; max=&quot;100&quot; step=&quot;0.1&quot; value=&quot;67&quot; oninput=&quot;viewer.setFOV(this.value)&quot;&gt;
+    
+    &lt;h3&gt;Shading&lt;/h3&gt;
+    &lt;button onclick=&quot;viewer.viewWireframe()&quot;&gt;wireframe&lt;/button&gt;
+    &lt;button onclick=&quot;viewer.viewSurfaceCurvature();&quot;&gt;curvature&lt;/button&gt;
+    &lt;button onclick=&quot;viewer.calculateOrientation(); viewer.viewSurfaceOrientation();&quot;&gt;orientation&lt;/button&gt;
+    &lt;button onclick=&quot;viewer.viewHemispherical()&quot;&gt;illumination&lt;/button&gt;
+    
+    &lt;h3&gt;Illumination controls&lt;/h3&gt;
+    &lt;input id=&quot;polar&quot; type=&quot;range&quot; min=&quot;0.1&quot; max=&quot;3.14&quot; step=&quot;0.1&quot; value=&quot;1.57&quot; oninput=&quot;viewer.setLightPolarAngle(this.value)&quot;&gt;
+    &lt;input id=&quot;azimuth&quot; type=&quot;range&quot; min=&quot;0.1&quot; max=&quot;6.283&quot; step=&quot;0.1&quot; value=&quot;0&quot; oninput=&quot;viewer.setLightAzimuthalAngle(this.value)&quot;&gt;
+    
+    &lt;h3&gt;Tracking ball&lt;/h3&gt;
+    &lt;script type="text/javascript"&gt;
+      function toggle() {
+        var element = document.getElementById("togglebutton");       
+          if ( element.value == "hide" ) {
+            element.value = "show";
+            viewer.hideTrackingball();
+          } else if ( element.value == "show") {
+            element.value = "hide";
+            viewer.showTrackingball();
+          }
+      }
+    &lt;/script&gt;
+    &lt;input type="button" value="hide" id="togglebutton" onclick="toggle();"&gt;&lt;/input&gt;
+    
+    &lt;h3&gt;Views&lt;/h3&gt;
+    &lt;button onclick=&quot;viewer.viewLeft();&quot;&gt;left&lt;/button&gt;
+    &lt;button onclick=&quot;viewer.viewRight();&quot;&gt;right&lt;/button&gt;
+    &lt;br/&gt;
+    &lt;button onclick=&quot;viewer.viewTop();&quot;&gt;top&lt;/button&gt;
+    &lt;button onclick=&quot;viewer.viewBottom();&quot;&gt;bottom&lt;/button&gt;
+    &lt;br/&gt;
+    &lt;button onclick=&quot;viewer.viewFront();&quot;&gt;front&lt;/button&gt;
+    &lt;button onclick=&quot;viewer.viewBack();&quot;&gt;back&lt;/button&gt;
+  &lt;/div&gt;	
+&lt;/body&gt;
+&lt;/html&gt;
+			</code></pre>
+			
+		
+			<h2>A note on accepted file types</h2>
+			
+			<p>In this tutorial, I used an input file in the <a href="http://en.wikipedia.org/wiki/PLY_(file_format)">Polygon File Format (PLY)</a>. Both ASCII and binary
+			PLY files can be loaded. I generated the input file using separate software, which pre-calculates the triangulation of the points, all of the required curvature values and 
+			stores them in the PLY file. This makes loading very quick.</p>
+			
+			<p>Raw point clouds can be loaded as well with <code>"point cloud"</code> as the type string. Point clouds are specified as CSV text files. 
+			The viewer will have to calculate all values in the browser, which makes loading point clouds significantly slower than loading pre-triangulated PLY files.</p>
+			
+			<p>Raw scanning data is usually stored as a csv file. These could be entered in the data base as such, because morphoviewer can use them directly. However,
+			the trade off is slow loading times, compared to binary PLY. The trade off of binary PLY is the fact that it requires preprocessing in some other software.</p>
+			
+			<p><a href="http://en.wikipedia.org/wiki/Wavefront_.obj_file">Wavefront object files (OBJ)</a> can be loaded as well, but the format is not a very good one, and we probably shouldn't
+			use it in the future. I used some OBJ files for testing purposes initially, which is why it is included.</p>
+			
+			<h2>That's all for now!</h2>
+  				
+		</div>
+		
+		<div style="clear: both;"></div>
+	</div>
+	
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+	<script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>
