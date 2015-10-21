@@ -6,9 +6,7 @@
 
 This is a WebGL library, intended for rendering and conducting the surface analysis of a 3d object within the web browser.
 
-An example of morphoviewer.js in use is [here](https://github.com/Nelarius/Nelarius.github.io/blob/master/index.html).
-
-## License
+An example of morphoviewer.js in use is [here](https://github.com/Nelarius/Nelarius.github.io/blob/master/index.html). Morphoviewer is licensed under GPL v3.
 
 ## Usage
 
