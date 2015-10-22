@@ -7,6 +7,13 @@ var morphoviewer = ( function( tools ) {
     module.Viewer = function( id ) {
         
         var self = this;
+        
+        /**
+         * Initialize the gl context
+         */
+        var glRes = initgl( id );
+        this.gl = glRes[0];
+        this.canvas = glRes[1];
 
         /////////////////////////////////////////////////////////////////////////////////////////
         // Global viewer state
@@ -94,10 +101,6 @@ var morphoviewer = ( function( tools ) {
             dx: 0, dy: 0 };
 
         this.leftMouseButtonDown = false;
-
-        var glRes = initgl( id );
-        this.gl = glRes[0];
-        this.canvas = glRes[1];
 
         var onMouseMove = function( event ) {
             self.mouse.x = event.pageX;
@@ -211,7 +214,7 @@ var morphoviewer = ( function( tools ) {
             -1.0, -1.0, 0.0,
             1.0, -1.0, 0.0
         ];
-        this.showPlane = true;
+        this.showPlane = false;
         this.planeObject = new tools.BufferObject( this.gl, this.gl.ARRAY_BUFFER );
         this.planeObject.dataStore( new Float32Array( vertexData ), this.gl.STATIC_DRAW );
         this.planeRotationMatrix = mat4.create();
