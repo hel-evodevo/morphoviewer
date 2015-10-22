@@ -184,7 +184,7 @@
         }
     </script>
 
-    <script src="morphoviewer.min.js"></script>
+    <script src="https://rawgit.com/hel-evodevo/morphoviewer/master/distribution/morphoviewer.min.js"></script>
 </head>
 
 <body onload="init()">
@@ -278,7 +278,6 @@
                         var reader = new FileReader();
                         reader.onload = function( event ) {
                             viewer.loadData( event.target.result );
-                            console.log("The model area is " + viewer.modelArea() );
                             document.getElementById( 'modelArea' ).innerHTML = '<h2>The total model area</h2><p>' + viewer.modelArea() +  '</p>';
                         };	
                         reader.readAsBinaryString( file );
